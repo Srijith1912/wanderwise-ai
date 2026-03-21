@@ -218,7 +218,6 @@ MIT
 ## Author
 
 Srijith Mulupuri
-[GitHub](https://github.com/Srijith1912)
 
 ## Acknowledgments
 
