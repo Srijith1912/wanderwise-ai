@@ -78,6 +78,11 @@ export default function DashboardPage() {
           <ul className="space-y-2 text-blue-800">
             <li>✓ Phase 2: Authentication completed!</li>
             <li>→ Phase 3: Build the AI Trip Planner</li>
+            <button
+              onClick={() => navigate("/planner")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
+              Plan a New Trip
+            </button>
             <li>→ Phase 4: Save and manage your trips</li>
             <li>→ Phase 5: Explore destinations on a map</li>
           </ul>

@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
+import TripPlannerPage from './pages/TripPlannerPage';
 
 /**
  * PROTECTED ROUTE COMPONENT
@@ -81,6 +82,14 @@ function App() {
                 <DashboardPage />
               </ProtectedRoute>
             }
+          />
+          <Route 
+            path="/planner" 
+            element={
+              <ProtectedRoute>
+                  <TripPlannerPage />
+              </ProtectedRoute>
+            } 
           />
 
           {/* Redirect unknown routes to dashboard */}
