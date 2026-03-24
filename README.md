@@ -58,7 +58,7 @@ Create a `.env` file in the `server/` folder:
 ```env
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/wanderwise-dev
 OPENAI_API_KEY=sk-your-openai-api-key-here
-JWT_SECRET=your_super_secret_key_here
+JWT_SECRET=your_super_secret_key
 PORT=5000
 NODE_ENV=development
 ```
