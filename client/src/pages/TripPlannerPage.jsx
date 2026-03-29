@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { generateTrip, saveTrip } from "../services/tripService";
+import { useNavigate } from 'react-router-dom';
 
 const INTERESTS = ["Food", "Culture", "Nature", "Adventure", "History", "Shopping", "Nightlife", "Art"];
 
 export default function TripPlannerPage() {
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     destination: "",
     budget: "moderate",
@@ -181,6 +185,19 @@ export default function TripPlannerPage() {
             {loading ? "Generating your itinerary..." : "Generate Trip"}
           </button>
         </div>
+
+        <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
+          ← Dashboard
+        </button>
+        <button
+          onClick={() => navigate('/trips')}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm">
+          My Saved Trips
+        </button>
+      </div>
 
         {/* Itinerary Result */}
         {itinerary && (

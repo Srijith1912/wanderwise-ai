@@ -6,6 +6,7 @@ const {
   getTrips,
   getTripById,
   deleteTrip,
+  updateTrip,
 } = require("../controllers/tripController");
 const protect = require("../middleware/authMiddleware");
 
@@ -14,5 +15,6 @@ router.post("/save", protect, saveTrip);
 router.get("/", protect, getTrips);
 router.get("/:id", protect, getTripById);
 router.delete("/:id", protect, deleteTrip);
+router.put("/:id", protect, updateTrip);
 
 module.exports = router;

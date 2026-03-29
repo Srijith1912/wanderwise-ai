@@ -7,6 +7,8 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import TripPlannerPage from './pages/TripPlannerPage';
+import SavedTripsPage from './pages/SavedTripsPage';
+import TripDetailPage from './pages/TripDetailPage';
 
 /**
  * PROTECTED ROUTE COMPONENT
@@ -91,6 +93,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          <Route path="/trips" element={<ProtectedRoute><SavedTripsPage /></ProtectedRoute>} />
+          <Route path="/trips/:id" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
 
           {/* Redirect unknown routes to dashboard */}
           {/* Or login if not authenticated */}

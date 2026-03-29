@@ -172,4 +172,37 @@ const deleteTrip = async (req, res) => {
   }
 };
 
-module.exports = { generateTrip, saveTrip, getTrips, getTripById, deleteTrip };
+// Update trip title
+const updateTrip = async (req, res) => {
+  try {
+    const trip = await Trip.findById(req.params.id);
+
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    // Ownership check
+    if (trip.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Only allow title to be updated for now
+    if (req.body.title !== undefined) {
+      trip.title = req.body.title;
+    }
+
+    const updatedTrip = await trip.save();
+    res.json(updatedTrip);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+module.exports = {
+  generateTrip,
+  saveTrip,
+  getTrips,
+  getTripById,
+  deleteTrip,
+  updateTrip,
+};

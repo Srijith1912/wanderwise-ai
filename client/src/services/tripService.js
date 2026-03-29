@@ -34,3 +34,23 @@ export const deleteTripById = async (id) => {
   });
   return response.data;
 };
+
+export const getTripById = async (id) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`/api/trips/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const updateTrip = async (id, title) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.put(
+    `/api/trips/${id}`,
+    { title },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return response.data;
+};

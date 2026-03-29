@@ -83,6 +83,12 @@ export default function DashboardPage() {
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
               Plan a New Trip
             </button>
+
+            <button
+              onClick={() => navigate('/trips')}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+              My Saved Trips
+            </button>
             <li>→ Phase 4: Save and manage your trips</li>
             <li>→ Phase 5: Explore destinations on a map</li>
           </ul>
