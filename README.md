@@ -5,7 +5,7 @@ An AI-powered travel planning web app with personalized itineraries, saved trips
 ## Features
 
 - 🤖 AI-generated personalized day-by-day itineraries
-- 💾 Save and manage trips
+- 💾 Save and manage trips with editable titles
 - 🗺️ Interactive map visualization _(coming soon)_
 - 📱 Simple social feed for travelers _(coming soon)_
 - 👤 User authentication with JWT
@@ -65,31 +65,29 @@ NODE_ENV=development
 
 ## Project Structure
 
-```
 wanderwise-ai/
-├── client/                          # React frontend
-│   ├── src/
-│   │   ├── components/              # Reusable UI components
-│   │   ├── pages/                   # Login, Signup, Dashboard, TripPlanner
-│   │   ├── contexts/                # AuthContext (global auth state)
-│   │   ├── services/                # authService, tripService
-│   │   ├── utils/
-│   │   ├── App.jsx                  # Main app with routing
-│   │   └── main.jsx                 # Vite entry point
-│   └── package.json
+├── client/ # React frontend
+│ ├── src/
+│ │ ├── components/ # Reusable UI components
+│ │ ├── pages/ # Login, Signup, Dashboard, TripPlanner, SavedTrips, TripDetail
+│ │ ├── contexts/ # AuthContext (global auth state)
+│ │ ├── services/ # authService, tripService
+│ │ ├── utils/
+│ │ ├── App.jsx # Main app with routing
+│ │ └── main.jsx # Vite entry point
+│ └── package.json
 │
-├── server/                          # Express backend
-│   ├── controllers/                 # authController, tripController
-│   ├── routes/                      # authRoutes, tripRoutes
-│   ├── models/                      # User, Trip schemas
-│   ├── middleware/                  # authMiddleware (JWT verification)
-│   ├── config/
-│   ├── server.js                    # Entry point
-│   └── package.json
+├── server/ # Express backend
+│ ├── controllers/ # authController, tripController
+│ ├── routes/ # authRoutes, tripRoutes
+│ ├── models/ # User, Trip schemas
+│ ├── middleware/ # authMiddleware (JWT verification)
+│ ├── config/
+│ ├── server.js # Entry point
+│ └── package.json
 │
 ├── README.md
 └── .gitignore
-```
 
 ## API Endpoints
 
@@ -105,6 +103,7 @@ wanderwise-ai/
 - `POST /api/trips/save` — Save itinerary to database (protected)
 - `GET /api/trips` — Get all trips for logged-in user (protected)
 - `GET /api/trips/:id` — Get single trip by ID (protected)
+- `PUT /api/trips/:id` — Update trip title (protected)
 - `DELETE /api/trips/:id` — Delete a trip (protected)
 
 ## Current Progress
@@ -114,7 +113,7 @@ wanderwise-ai/
 | 1     | Project Setup     | ✅ Complete |
 | 2     | Authentication    | ✅ Complete |
 | 3     | Trip Planner (AI) | ✅ Complete |
-| 4     | Saved Trips       | ⏳ Upcoming |
+| 4     | Saved Trips       | ✅ Complete |
 | 5     | Map Integration   | ⏳ Upcoming |
 | 6     | Community Feed    | ⏳ Upcoming |
 | 7     | Explore/Trending  | ⏳ Upcoming |
@@ -128,22 +127,29 @@ wanderwise-ai/
 - Password hashing with bcryptjs
 - Protected routes on both frontend and backend
 - Session persistence via localStorage
-- Token restoration on page refresh
 
 ### AI Trip Planner
 
 - Trip planner form (destination, budget, duration, interests, travel style)
 - OpenAI-powered itinerary generation (gpt-4o-mini)
-- Structured day-by-day itinerary with Morning / Afternoon / Evening activities
+- Structured day-by-day itinerary with time-based activities
 - Travel tips and trip summary
 - Save generated trips to MongoDB
 - Full ownership checks — users can only access their own trips
+
+### Saved Trips
+
+- Saved trips list with destination cards
+- Full itinerary detail view
+- Inline trip title editing
+- Delete trips from list or detail view
+- Empty state and loading states throughout
 
 ## Known Issues
 
 ### Session Restoration Timing (Minor)
 
-On page refresh, users are briefly redirected to login before the session is restored. Fix planned for Phase 8 (Polish).
+On page refresh, users are briefly redirected to login before the session is restored. Fix planned for Phase 8.
 
 ## License
 
