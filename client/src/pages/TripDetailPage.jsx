@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTripById, updateTrip, deleteTripById } from '../services/tripService';
+import MapView from "../components/MapView";
 
 export default function TripDetailPage() {
   const { id } = useParams();
@@ -168,6 +169,17 @@ export default function TripDetailPage() {
             </button>
           </div>
         </div>
+
+        {/* Map Section */}
+        {trip.generatedItinerary && trip.generatedItinerary.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">Trip Map</h2>
+            <MapView
+              destination={trip.destination}
+              itinerary={trip.generatedItinerary}
+            />
+          </div>
+        )}
 
         {/* Day-by-day itinerary */}
         {itinerary?.days?.map((day) => (
