@@ -6,7 +6,7 @@ An AI-powered travel planning web app with personalized itineraries, saved trips
 
 - 🤖 AI-generated personalized day-by-day itineraries
 - 💾 Save and manage trips with editable titles
-- 🗺️ Interactive map visualization _(coming soon)_
+- 🗺️ Interactive map with activity markers per trip
 - 📱 Simple social feed for travelers _(coming soon)_
 - 👤 User authentication with JWT
 - 🔐 Protected routes and secure sessions
@@ -18,7 +18,7 @@ An AI-powered travel planning web app with personalized itineraries, saved trips
 - **Database:** MongoDB Atlas + Mongoose
 - **Authentication:** JWT + bcryptjs
 - **AI:** OpenAI API (gpt-4o-mini)
-- **Maps:** Mapbox _(coming soon)_
+- **Maps:** Mapbox (react-map-gl)
 - **HTTP Client:** Axios
 - **Deployment:** Vercel (frontend), Render (backend) _(coming soon)_
 
@@ -30,6 +30,7 @@ An AI-powered travel planning web app with personalized itineraries, saved trips
 - npm v10+
 - MongoDB Atlas account
 - OpenAI API key
+- Mapbox account
 
 ### Installation
 
@@ -63,31 +64,39 @@ PORT=5000
 NODE_ENV=development
 ```
 
+Create a `.env` file in the `client/` folder:
+
+```env
+VITE_MAPBOX_TOKEN=your_mapbox_public_token_here
+```
+
 ## Project Structure
 
+```
 wanderwise-ai/
-├── client/ # React frontend
-│ ├── src/
-│ │ ├── components/ # Reusable UI components
-│ │ ├── pages/ # Login, Signup, Dashboard, TripPlanner, SavedTrips, TripDetail
-│ │ ├── contexts/ # AuthContext (global auth state)
-│ │ ├── services/ # authService, tripService
-│ │ ├── utils/
-│ │ ├── App.jsx # Main app with routing
-│ │ └── main.jsx # Vite entry point
-│ └── package.json
+├── client/                          # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── MapView.jsx          # Mapbox map with activity markers
+│   │   ├── pages/                   # Login, Signup, Dashboard, TripPlanner, SavedTrips, TripDetail
+│   │   ├── contexts/                # AuthContext (global auth state)
+│   │   ├── services/                # authService, tripService
+│   │   ├── App.jsx                  # Main app with routing
+│   │   └── main.jsx                 # Vite entry point
+│   ├── .env                         # VITE_MAPBOX_TOKEN (not in git)
+│   └── package.json
 │
-├── server/ # Express backend
-│ ├── controllers/ # authController, tripController
-│ ├── routes/ # authRoutes, tripRoutes
-│ ├── models/ # User, Trip schemas
-│ ├── middleware/ # authMiddleware (JWT verification)
-│ ├── config/
-│ ├── server.js # Entry point
-│ └── package.json
+├── server/                          # Express backend
+│   ├── controllers/                 # authController, tripController
+│   ├── routes/                      # authRoutes, tripRoutes
+│   ├── models/                      # User, Trip schemas
+│   ├── middleware/                  # authMiddleware (JWT verification)
+│   ├── server.js                    # Entry point
+│   └── package.json
 │
 ├── README.md
 └── .gitignore
+```
 
 ## API Endpoints
 
@@ -114,7 +123,7 @@ wanderwise-ai/
 | 2     | Authentication    | ✅ Complete |
 | 3     | Trip Planner (AI) | ✅ Complete |
 | 4     | Saved Trips       | ✅ Complete |
-| 5     | Map Integration   | ⏳ Upcoming |
+| 5     | Map Integration   | ✅ Complete |
 | 6     | Community Feed    | ⏳ Upcoming |
 | 7     | Explore/Trending  | ⏳ Upcoming |
 | 8     | Polish & Deploy   | ⏳ Upcoming |
@@ -145,6 +154,14 @@ wanderwise-ai/
 - Delete trips from list or detail view
 - Empty state and loading states throughout
 
+### Map Integration
+
+- Interactive Mapbox map embedded in every trip detail view
+- Map auto-centers on the trip destination
+- Activity markers color-coded by day across the full itinerary
+- Clickable markers show popup with activity name, day, and time
+- Graceful fallback for activities that cannot be geocoded
+
 ## Known Issues
 
 ### Session Restoration Timing (Minor)
@@ -162,4 +179,5 @@ Srijith Mulupuri
 ## Acknowledgments
 
 - OpenAI for the AI API
+- Mapbox for map and geocoding services
 - React, Express, and MongoDB communities
