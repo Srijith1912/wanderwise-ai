@@ -171,12 +171,12 @@ export default function TripDetailPage() {
         </div>
 
         {/* Map Section */}
-        {trip.generatedItinerary && trip.generatedItinerary.length > 0 && (
+        {trip.generatedItinerary?.days && trip.generatedItinerary.days.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Trip Map</h2>
             <MapView
               destination={trip.destination}
-              itinerary={trip.generatedItinerary}
+              itinerary={trip.generatedItinerary.days}
             />
           </div>
         )}
