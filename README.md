@@ -7,9 +7,10 @@ An AI-powered travel planning web app with personalized itineraries, saved trips
 - 🤖 AI-generated personalized day-by-day itineraries
 - 💾 Save and manage trips with editable titles
 - 🗺️ Interactive map with activity markers per trip
-- 📱 Simple social feed for travelers _(coming soon)_
+- 📱 Social feed — create posts, like, and view traveler profiles
 - 👤 User authentication with JWT
 - 🔐 Protected routes and secure sessions
+- 🌍 Explore/trending destinations _(coming soon)_
 
 ## Tech Stack
 
@@ -78,18 +79,19 @@ wanderwise-ai/
 │   ├── src/
 │   │   ├── components/
 │   │   │   └── MapView.jsx          # Mapbox map with activity markers
-│   │   ├── pages/                   # Login, Signup, Dashboard, TripPlanner, SavedTrips, TripDetail
-│   │   ├── contexts/                # AuthContext (global auth state)
-│   │   ├── services/                # authService, tripService
+│   │   ├── pages/                   # Login, Signup, Dashboard, TripPlanner,
+│   │   │                            # SavedTrips, TripDetail, Feed, UserProfile
+│   │   ├── contexts/                # AuthContext (global auth state + useAuth hook)
+│   │   ├── services/                # authService, tripService, postService
 │   │   ├── App.jsx                  # Main app with routing
 │   │   └── main.jsx                 # Vite entry point
 │   ├── .env                         # VITE_MAPBOX_TOKEN (not in git)
 │   └── package.json
 │
 ├── server/                          # Express backend
-│   ├── controllers/                 # authController, tripController
-│   ├── routes/                      # authRoutes, tripRoutes
-│   ├── models/                      # User, Trip schemas
+│   ├── controllers/                 # authController, tripController, postController
+│   ├── routes/                      # authRoutes, tripRoutes, postRoutes
+│   ├── models/                      # User, Trip, Post schemas
 │   ├── middleware/                  # authMiddleware (JWT verification)
 │   ├── server.js                    # Entry point
 │   └── package.json
@@ -115,6 +117,13 @@ wanderwise-ai/
 - `PUT /api/trips/:id` — Update trip title (protected)
 - `DELETE /api/trips/:id` — Delete a trip (protected)
 
+### Posts
+
+- `POST /api/posts` — Create a new post (protected)
+- `GET /api/posts` — Get all posts, newest first (protected)
+- `GET /api/posts/user/:userId` — Get posts by a specific user (protected)
+- `POST /api/posts/:id/like` — Toggle like on a post (protected)
+
 ## Current Progress
 
 | Phase | Task              | Status      |
@@ -124,7 +133,7 @@ wanderwise-ai/
 | 3     | Trip Planner (AI) | ✅ Complete |
 | 4     | Saved Trips       | ✅ Complete |
 | 5     | Map Integration   | ✅ Complete |
-| 6     | Community Feed    | ⏳ Upcoming |
+| 6     | Community Feed    | ✅ Complete |
 | 7     | Explore/Trending  | ⏳ Upcoming |
 | 8     | Polish & Deploy   | ⏳ Upcoming |
 
@@ -161,6 +170,14 @@ wanderwise-ai/
 - Activity markers color-coded by day across the full itinerary
 - Clickable markers show popup with activity name, day, and time
 - Graceful fallback for activities that cannot be geocoded
+
+### Community Feed
+
+- Create posts with caption and optional destination tag
+- Scrollable feed of all posts from all users, newest first
+- Like/unlike toggle with instant optimistic UI update
+- Clickable author names navigate to user profiles
+- User profile pages showing post history and post count
 
 ## Known Issues
 
