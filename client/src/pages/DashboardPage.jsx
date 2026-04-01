@@ -89,6 +89,19 @@ export default function DashboardPage() {
               className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
               My Saved Trips
             </button>
+
+            <button 
+              onClick={() => navigate('/feed')} 
+              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition">
+              Travel Feed
+            </button>
+
+            <button 
+            onClick={() => navigate(`/profile/${user._id}`)}
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+              My Profile
+            </button>
+
             <li>→ Phase 4: Save and manage your trips</li>
             <li>→ Phase 5: Explore destinations on a map</li>
           </ul>
