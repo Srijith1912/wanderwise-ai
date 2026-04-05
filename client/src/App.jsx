@@ -11,6 +11,7 @@ import SavedTripsPage from './pages/SavedTripsPage';
 import TripDetailPage from './pages/TripDetailPage';
 import FeedPage from './pages/FeedPage';
 import UserProfilePage from './pages/UserProfilePage';
+import ExplorePage from './pages/ExplorePage';
 
 
 /**
@@ -76,6 +77,7 @@ function App() {
           
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/explore" element={<ExplorePage />} />
 
           {/* Protected Routes */}
           {/* Only logged-in users can access these */}

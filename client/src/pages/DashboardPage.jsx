@@ -102,6 +102,12 @@ export default function DashboardPage() {
               My Profile
             </button>
 
+            <button
+            onClick={() => navigate('/explore')}
+            className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700">
+              🌍 Explore Destinations
+            </button>
+
             <li>→ Phase 4: Save and manage your trips</li>
             <li>→ Phase 5: Explore destinations on a map</li>
           </ul>
