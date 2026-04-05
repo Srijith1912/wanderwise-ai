@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/trips";
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/trips`
+  : "/api/trips";
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
@@ -8,49 +10,45 @@ const getAuthHeader = () => {
 };
 
 export const generateTrip = async (formData) => {
-  const response = await axios.post(`${API_URL}/generate`, formData, {
+  const response = await axios.post(`${BASE}/generate`, formData, {
     headers: getAuthHeader(),
   });
   return response.data;
 };
 
 export const saveTrip = async (tripData) => {
-  const response = await axios.post(`${API_URL}/save`, tripData, {
+  const response = await axios.post(`${BASE}/save`, tripData, {
     headers: getAuthHeader(),
   });
   return response.data;
 };
 
 export const getTrips = async () => {
-  const response = await axios.get(API_URL, {
+  const response = await axios.get(BASE, {
     headers: getAuthHeader(),
   });
   return response.data;
 };
 
 export const deleteTripById = async (id) => {
-  const response = await axios.delete(`${API_URL}/${id}`, {
+  const response = await axios.delete(`${BASE}/${id}`, {
     headers: getAuthHeader(),
   });
   return response.data;
 };
 
 export const getTripById = async (id) => {
-  const token = localStorage.getItem("token");
-  const response = await axios.get(`/api/trips/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const response = await axios.get(`${BASE}/${id}`, {
+    headers: getAuthHeader(),
   });
   return response.data;
 };
 
 export const updateTrip = async (id, title) => {
-  const token = localStorage.getItem("token");
   const response = await axios.put(
-    `/api/trips/${id}`,
+    `${BASE}/${id}`,
     { title },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    { headers: getAuthHeader() },
   );
   return response.data;
 };
