@@ -2,6 +2,8 @@
 
 An AI-powered travel planning web app where users can generate personalized itineraries, save trips, explore destinations on an interactive map, and share travel posts through a community feed.
 
+🌍 **Live App:** https://wanderwise-ai-psi.vercel.app
+
 ---
 
 ## Features
@@ -36,6 +38,12 @@ An AI-powered travel planning web app where users can generate personalized itin
 
 - OpenAI API (gpt-4o-mini)
 - Mapbox Geocoding + Maps API
+
+**Deployment**
+
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
 
 ---
 
@@ -74,13 +82,19 @@ npm install
 4. Configure environment variables
 
 Create `server/.env`:
+
+```
 PORT=5000
 MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
+```
 
 Create `client/.env`:
+
+```
 VITE_MAPBOX_TOKEN=your_mapbox_public_token
+```
 
 5. Run the app
 
@@ -102,20 +116,23 @@ Frontend runs on `http://localhost:5173`, backend on `http://localhost:5000`.
 
 ## Project Structure
 
+```
 wanderwise-ai/
-├── client/ # React frontend (Vite)
-│ ├── src/
-│ │ ├── components/ # MapView
-│ │ ├── contexts/ # AuthContext
-│ │ ├── pages/ # All page components
-│ │ └── services/ # API call functions
+├── client/                  # React frontend (Vite)
+│   ├── src/
+│   │   ├── components/      # MapView
+│   │   ├── contexts/        # AuthContext + useAuth hook
+│   │   ├── pages/           # All page components
+│   │   └── services/        # API call functions
+│   └── vercel.json          # SPA routing config for Vercel
 │
-├── server/ # Express backend
-│ ├── controllers/ # Route logic
-│ ├── data/ # Curated destinations data
-│ ├── middleware/ # JWT auth middleware
-│ ├── models/ # Mongoose schemas
-│ └── routes/ # API route definitions
+├── server/                  # Express backend
+│   ├── controllers/         # Route logic
+│   ├── data/                # Curated destinations data
+│   ├── middleware/          # JWT auth middleware
+│   ├── models/              # Mongoose schemas
+│   └── routes/              # API route definitions
+```
 
 ---
 
@@ -137,14 +154,6 @@ wanderwise-ai/
 | GET    | `/api/posts/user/:userId` | Get posts by user             | Yes  |
 | POST   | `/api/posts/:id/like`     | Toggle like on post           | Yes  |
 | GET    | `/api/explore`            | Get destinations (filterable) | No   |
-
----
-
-## Deployment
-
-- Frontend: [Vercel](https://vercel.com)
-- Backend: [Render](https://render.com)
-- Database: MongoDB Atlas
 
 ---
 
