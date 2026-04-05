@@ -30,10 +30,10 @@ import ExplorePage from './pages/ExplorePage';
  * This ensures only logged-in users can see certain pages
  */
 const ProtectedRoute = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoadingAuth } = useAuth();
 
-  // While checking if user is logged in, show loading
-  if (isLoading) {
+  // Wait for session restore to finish before deciding anything
+  if (isLoadingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -44,12 +44,8 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // If user exists, show the page
-  if (user) {
-    return children;
-  }
+  if (user) return children;
 
-  // If no user, redirect to login
   return <Navigate to="/login" replace />;
 };
 

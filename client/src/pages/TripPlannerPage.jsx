@@ -88,6 +88,19 @@ export default function TripPlannerPage() {
         <p className="text-gray-500 text-sm mt-1">Tell us where you want to go and we'll plan the perfect trip</p>
       </div>
 
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
+          ← Dashboard
+        </button>
+        <button
+          onClick={() => navigate('/trips')}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm">
+          My Saved Trips
+        </button>
+      </div>
+
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
 
         {/* Form */}
@@ -107,7 +120,7 @@ export default function TripPlannerPage() {
           </div>
 
           {/* Duration + Budget */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
               <input
@@ -185,19 +198,6 @@ export default function TripPlannerPage() {
             {loading ? "Generating your itinerary..." : "Generate Trip"}
           </button>
         </div>
-
-        <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
-          ← Dashboard
-        </button>
-        <button
-          onClick={() => navigate('/trips')}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm">
-          My Saved Trips
-        </button>
-      </div>
 
         {/* Itinerary Result */}
         {itinerary && (

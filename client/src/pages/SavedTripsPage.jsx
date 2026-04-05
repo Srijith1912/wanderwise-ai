@@ -52,7 +52,7 @@ export default function SavedTripsPage() {
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <h1 className="text-3xl font-bold text-gray-800">My Saved Trips</h1>
           <div className="flex gap-3">
             <button

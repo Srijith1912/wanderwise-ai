@@ -1,200 +1,158 @@
-# WanderWise AI
+# WanderWise AI ✈️
 
-An AI-powered travel planning web app with personalized itineraries, saved trips, interactive maps, and a social community feed.
+An AI-powered travel planning web app where users can generate personalized itineraries, save trips, explore destinations on an interactive map, and share travel posts through a community feed.
+
+---
 
 ## Features
 
-- 🤖 AI-generated personalized day-by-day itineraries
-- 💾 Save and manage trips with editable titles
-- 🗺️ Interactive map with activity markers per trip
-- 📱 Social feed — create posts, like, and view traveler profiles
-- 👤 User authentication with JWT
-- 🔐 Protected routes and secure sessions
-- 🌍 Explore/trending destinations _(coming soon)_
+- **AI Trip Planner** — Generate day-by-day itineraries powered by OpenAI based on destination, budget, duration, interests, and travel style
+- **Interactive Map** — View geocoded activity markers for each day of your itinerary on a Mapbox map
+- **Saved Trips** — Save, rename, and manage your generated itineraries
+- **Community Feed** — Share travel posts, like others' moments, and view user profiles
+- **Explore Page** — Browse curated destinations from around the world filtered by continent, budget, and vibe
+- **Authentication** — Secure JWT-based login and registration with protected routes
+
+---
 
 ## Tech Stack
 
-- **Frontend:** React + Vite + Tailwind CSS + React Router
-- **Backend:** Node.js + Express.js
-- **Database:** MongoDB Atlas + Mongoose
-- **Authentication:** JWT + bcryptjs
-- **AI:** OpenAI API (gpt-4o-mini)
-- **Maps:** Mapbox (react-map-gl)
-- **HTTP Client:** Axios
-- **Deployment:** Vercel (frontend), Render (backend) _(coming soon)_
+**Frontend**
+
+- React + Vite
+- Tailwind CSS
+- React Router v6
+- Axios
+- react-map-gl v7 + Mapbox GL JS
+
+**Backend**
+
+- Node.js + Express.js
+- MongoDB Atlas + Mongoose
+- JSON Web Tokens (JWT)
+- bcryptjs
+
+**APIs**
+
+- OpenAI API (gpt-4o-mini)
+- Mapbox Geocoding + Maps API
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js v22+
-- npm v10+
+- Node.js v18+
 - MongoDB Atlas account
 - OpenAI API key
-- Mapbox account
+- Mapbox public access token
 
 ### Installation
 
+1. Clone the repository
+
 ```bash
-# Clone the repository
 git clone https://github.com/Srijith1912/wanderwise-ai.git
 cd wanderwise-ai
+```
 
-# Frontend setup
-cd client
-npm install
-npm run dev
-# Runs on http://localhost:5173
+2. Install backend dependencies
 
-# Backend setup (in a new terminal)
+```bash
 cd server
 npm install
-npm start
-# Runs on http://localhost:5000
 ```
 
-### Environment Variables
+3. Install frontend dependencies
 
-Create a `.env` file in the `server/` folder:
+```bash
+cd ../client
+npm install
+```
 
-```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/wanderwise-dev
-OPENAI_API_KEY=sk-your-openai-api-key-here
-JWT_SECRET=your_super_secret_key
+4. Configure environment variables
+
+Create `server/.env`:
 PORT=5000
-NODE_ENV=development
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_jwt_secret
+OPENAI_API_KEY=your_openai_api_key
+
+Create `client/.env`:
+VITE_MAPBOX_TOKEN=your_mapbox_public_token
+
+5. Run the app
+
+Backend (from `/server`):
+
+```bash
+npx nodemon server.js
 ```
 
-Create a `.env` file in the `client/` folder:
+Frontend (from `/client`):
 
-```env
-VITE_MAPBOX_TOKEN=your_mapbox_public_token_here
+```bash
+npm run dev
 ```
+
+Frontend runs on `http://localhost:5173`, backend on `http://localhost:5000`.
+
+---
 
 ## Project Structure
 
-```
 wanderwise-ai/
-├── client/                          # React frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── MapView.jsx          # Mapbox map with activity markers
-│   │   ├── pages/                   # Login, Signup, Dashboard, TripPlanner,
-│   │   │                            # SavedTrips, TripDetail, Feed, UserProfile
-│   │   ├── contexts/                # AuthContext (global auth state + useAuth hook)
-│   │   ├── services/                # authService, tripService, postService
-│   │   ├── App.jsx                  # Main app with routing
-│   │   └── main.jsx                 # Vite entry point
-│   ├── .env                         # VITE_MAPBOX_TOKEN (not in git)
-│   └── package.json
+├── client/ # React frontend (Vite)
+│ ├── src/
+│ │ ├── components/ # MapView
+│ │ ├── contexts/ # AuthContext
+│ │ ├── pages/ # All page components
+│ │ └── services/ # API call functions
 │
-├── server/                          # Express backend
-│   ├── controllers/                 # authController, tripController, postController
-│   ├── routes/                      # authRoutes, tripRoutes, postRoutes
-│   ├── models/                      # User, Trip, Post schemas
-│   ├── middleware/                  # authMiddleware (JWT verification)
-│   ├── server.js                    # Entry point
-│   └── package.json
-│
-├── README.md
-└── .gitignore
-```
+├── server/ # Express backend
+│ ├── controllers/ # Route logic
+│ ├── data/ # Curated destinations data
+│ ├── middleware/ # JWT auth middleware
+│ ├── models/ # Mongoose schemas
+│ └── routes/ # API route definitions
+
+---
 
 ## API Endpoints
 
-### Auth
+| Method | Endpoint                  | Description                   | Auth |
+| ------ | ------------------------- | ----------------------------- | ---- |
+| POST   | `/api/auth/register`      | Register new user             | No   |
+| POST   | `/api/auth/login`         | Login and get token           | No   |
+| GET    | `/api/auth/me`            | Get current user              | Yes  |
+| POST   | `/api/trips/generate`     | Generate AI itinerary         | Yes  |
+| POST   | `/api/trips/save`         | Save a trip                   | Yes  |
+| GET    | `/api/trips`              | Get all user trips            | Yes  |
+| GET    | `/api/trips/:id`          | Get single trip               | Yes  |
+| PUT    | `/api/trips/:id`          | Update trip title             | Yes  |
+| DELETE | `/api/trips/:id`          | Delete a trip                 | Yes  |
+| POST   | `/api/posts`              | Create a post                 | Yes  |
+| GET    | `/api/posts`              | Get all posts                 | Yes  |
+| GET    | `/api/posts/user/:userId` | Get posts by user             | Yes  |
+| POST   | `/api/posts/:id/like`     | Toggle like on post           | Yes  |
+| GET    | `/api/explore`            | Get destinations (filterable) | No   |
 
-- `POST /api/auth/register` — Create new user account
-- `POST /api/auth/login` — Login and receive JWT token
-- `GET /api/auth/me` — Get current user (protected)
+---
 
-### Trips
+## Deployment
 
-- `POST /api/trips/generate` — Generate AI itinerary (protected)
-- `POST /api/trips/save` — Save itinerary to database (protected)
-- `GET /api/trips` — Get all trips for logged-in user (protected)
-- `GET /api/trips/:id` — Get single trip by ID (protected)
-- `PUT /api/trips/:id` — Update trip title (protected)
-- `DELETE /api/trips/:id` — Delete a trip (protected)
+- Frontend: [Vercel](https://vercel.com)
+- Backend: [Render](https://render.com)
+- Database: MongoDB Atlas
 
-### Posts
+---
 
-- `POST /api/posts` — Create a new post (protected)
-- `GET /api/posts` — Get all posts, newest first (protected)
-- `GET /api/posts/user/:userId` — Get posts by a specific user (protected)
-- `POST /api/posts/:id/like` — Toggle like on a post (protected)
+## Future Improvements
 
-## Current Progress
-
-| Phase | Task              | Status      |
-| ----- | ----------------- | ----------- |
-| 1     | Project Setup     | ✅ Complete |
-| 2     | Authentication    | ✅ Complete |
-| 3     | Trip Planner (AI) | ✅ Complete |
-| 4     | Saved Trips       | ✅ Complete |
-| 5     | Map Integration   | ✅ Complete |
-| 6     | Community Feed    | ✅ Complete |
-| 7     | Explore/Trending  | ⏳ Upcoming |
-| 8     | Polish & Deploy   | ⏳ Upcoming |
-
-## What's Implemented
-
-### Authentication
-
-- User registration and login with JWT
-- Password hashing with bcryptjs
-- Protected routes on both frontend and backend
-- Session persistence via localStorage
-
-### AI Trip Planner
-
-- Trip planner form (destination, budget, duration, interests, travel style)
-- OpenAI-powered itinerary generation (gpt-4o-mini)
-- Structured day-by-day itinerary with time-based activities
-- Travel tips and trip summary
-- Save generated trips to MongoDB
-- Full ownership checks — users can only access their own trips
-
-### Saved Trips
-
-- Saved trips list with destination cards
-- Full itinerary detail view
-- Inline trip title editing
-- Delete trips from list or detail view
-- Empty state and loading states throughout
-
-### Map Integration
-
-- Interactive Mapbox map embedded in every trip detail view
-- Map auto-centers on the trip destination
-- Activity markers color-coded by day across the full itinerary
-- Clickable markers show popup with activity name, day, and time
-- Graceful fallback for activities that cannot be geocoded
-
-### Community Feed
-
-- Create posts with caption and optional destination tag
-- Scrollable feed of all posts from all users, newest first
-- Like/unlike toggle with instant optimistic UI update
-- Clickable author names navigate to user profiles
-- User profile pages showing post history and post count
-
-## Known Issues
-
-### Session Restoration Timing (Minor)
-
-On page refresh, users are briefly redirected to login before the session is restored. Fix planned for Phase 8.
-
-## License
-
-MIT
-
-## Author
-
-Srijith Mulupuri
-
-## Acknowledgments
-
-- OpenAI for the AI API
-- Mapbox for map and geocoding services
-- React, Express, and MongoDB communities
+- Image uploads on posts
+- Comments on posts
+- Group trip planning
+- Real-time chat
+- Expense splitting
+- Live location sharing during trips
