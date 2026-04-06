@@ -9,11 +9,11 @@ An AI-powered travel planning web app where users can generate personalized itin
 ## Features
 
 - **AI Trip Planner** — Generate day-by-day itineraries powered by OpenAI based on destination, budget, duration, interests, and travel style
-- **Interactive Map** — View geocoded activity markers for each day of your itinerary on a Mapbox map
-- **Saved Trips** — Save, rename, and manage your generated itineraries
+- **Interactive Map** — View geocoded activity markers color-coded by day on a Mapbox map, with clickable popups for each activity
+- **Saved Trips** — Save, rename, and delete your generated itineraries with full detail view
 - **Community Feed** — Share travel posts, like others' moments, and view user profiles
-- **Explore Page** — Browse curated destinations from around the world filtered by continent, budget, and vibe
-- **Authentication** — Secure JWT-based login and registration with protected routes
+- **Explore Page** — Browse 20 curated destinations from around the world filtered by continent, budget, and vibe
+- **Authentication** — Secure JWT-based login and registration with protected routes and session restoration
 
 ---
 
@@ -88,12 +88,14 @@ PORT=5000
 MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
+CLIENT_URL=http://localhost:5173
 ```
 
 Create `client/.env`:
 
 ```
 VITE_MAPBOX_TOKEN=your_mapbox_public_token
+VITE_API_URL=http://localhost:5000/api
 ```
 
 5. Run the app
@@ -112,6 +114,8 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`, backend on `http://localhost:5000`.
 
+> ⚠️ **Note:** The live backend is hosted on Render's free tier and may take 30–60 seconds to respond after a period of inactivity.
+
 ---
 
 ## Project Structure
@@ -124,7 +128,8 @@ wanderwise-ai/
 │   │   ├── contexts/        # AuthContext + useAuth hook
 │   │   ├── pages/           # All page components
 │   │   └── services/        # API call functions
-│   └── vercel.json          # SPA routing config for Vercel
+│   ├── vercel.json          # SPA routing config for Vercel
+│   └── vite.config.js       # Vite proxy config for local dev
 │
 ├── server/                  # Express backend
 │   ├── controllers/         # Route logic
@@ -157,11 +162,22 @@ wanderwise-ai/
 
 ---
 
-## Future Improvements
+## Roadmap
 
-- Image uploads on posts
-- Comments on posts
-- Group trip planning
-- Real-time chat
-- Expense splitting
-- Live location sharing during trips
+### In Progress / Near-Term
+
+- [ ] UI visual overhaul — bolder design, animations via Framer Motion
+- [ ] Custom profile picture upload
+- [ ] Image uploads on posts
+- [ ] Comments on posts
+- [ ] Follow / unfollow users
+
+### Planned
+
+- [ ] Weather forecast per destination
+- [ ] AI-generated packing list per trip
+- [ ] Trip calendar view
+- [ ] Group trip planning
+- [ ] Expense splitting (Splitwise-style)
+- [ ] Real-time direct messages
+- [ ] Live location sharing in groups
