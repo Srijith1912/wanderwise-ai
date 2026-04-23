@@ -195,7 +195,7 @@ export default function TripDetailPage() {
 
             <div className="space-y-3">
               {day.activities?.map((activity, i) => (
-                <div key={i} className="flex gap-3">
+                <div key={i} className="flex gap-3 items-start">
                   <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg w-20 text-center shrink-0 h-fit">
                     {activity.time}
                   </span>

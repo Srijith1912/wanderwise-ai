@@ -108,13 +108,18 @@ export default function MapView({ destination, itinerary }) {
                 setSelectedMarker(marker);
               }}
             >
-              <div
-                className="w-4 h-4 rounded-full border-2 border-white cursor-pointer shadow-md"
-                style={{
-                  backgroundColor: dayColors[(marker.day - 1) % dayColors.length],
-                }}
-                title={marker.label}
-              />
+              <div className="relative flex items-center justify-center cursor-pointer group">
+                <div
+                  className="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white font-bold"
+                  style={{
+                    backgroundColor: dayColors[(marker.day - 1) % dayColors.length],
+                    fontSize: "9px",
+                  }}
+                  title={marker.label}
+                >
+                  {marker.day}
+                </div>
+              </div>
             </Marker>
           ))}
 
