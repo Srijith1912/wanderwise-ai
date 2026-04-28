@@ -114,7 +114,7 @@ export default function SignupPage() {
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
               disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
             />
           </div>
 
@@ -146,7 +146,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
             />
             <p className="text-xs text-gray-500 mt-1">At least 6 characters</p>
           </div>
@@ -163,7 +163,7 @@ export default function SignupPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
             />
           </div>
 

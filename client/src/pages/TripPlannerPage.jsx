@@ -115,7 +115,7 @@ export default function TripPlannerPage() {
               value={formData.destination}
               onChange={handleChange}
               placeholder="e.g. Tokyo, Paris, Bali"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function TripPlannerPage() {
                 onChange={handleChange}
                 min={1}
                 max={30}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -139,7 +139,7 @@ export default function TripPlannerPage() {
                 name="budget"
                 value={formData.budget}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="budget">Budget</option>
                 <option value="moderate">Moderate</option>
@@ -155,7 +155,7 @@ export default function TripPlannerPage() {
               name="travelStyle"
               value={formData.travelStyle}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="relaxed">Relaxed</option>
               <option value="balanced">Balanced</option>
