@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrips, deleteTripById } from '../services/tripService';
+import Layout from '../components/Layout';
+
+const BUDGET_BADGE = {
+  budget: 'bg-forest-50 text-forest-700 border-forest-100',
+  moderate: 'bg-terracotta-50 text-terracotta-700 border-terracotta-100',
+  luxury: 'bg-coral-50 text-coral-700 border-coral-100',
+};
 
 export default function SavedTripsPage() {
   const [trips, setTrips] = useState([]);
@@ -25,9 +32,7 @@ export default function SavedTripsPage() {
   };
 
   const handleDelete = async (id) => {
-    const confirmed = window.confirm('Are you sure you want to delete this trip?');
-    if (!confirmed) return;
-
+    if (!window.confirm('Delete this trip?')) return;
     setDeletingId(id);
     try {
       await deleteTripById(id);
@@ -39,106 +44,99 @@ export default function SavedTripsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">Loading your trips...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">My Saved Trips</h1>
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate('/planner')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              + Plan New Trip
-            </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-            >
-              Dashboard
-            </button>
-          </div>
-        </div>
-
-        {/* Error state */}
-        {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {trips.length === 0 && !error && (
-          <div className="text-center py-20">
-            <p className="text-gray-400 text-xl mb-4">No saved trips yet.</p>
-            <button
-              onClick={() => navigate('/planner')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-            >
-              Plan Your First Trip
-            </button>
-          </div>
-        )}
-
-        {/* Trip cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {trips.map((trip) => (
-            <div
-              key={trip._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between hover:shadow-md transition"
-            >
-              {/* Trip info */}
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-1">
-                  {trip.title || trip.destination}
-                </h2>
-                <p className="text-gray-500 text-sm mb-3">{trip.destination}</p>
-                <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-4">
-                  <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                    {trip.duration} days
-                  </span>
-                  <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full">
-                    {trip.budget} budget
-                  </span>
-                  <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
-                    {trip.travelStyle}
-                  </span>
-                </div>
-                <p className="text-gray-400 text-xs">
-                  Saved on {new Date(trip.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 mt-5">
-                <button
-                  onClick={() => navigate(`/trips/${trip._id}`)}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition text-sm"
-                >
-                  View Itinerary
-                </button>
-                <button
-                  onClick={() => handleDelete(trip._id)}
-                  disabled={deletingId === trip._id}
-                  className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 transition text-sm disabled:opacity-50"
-                >
-                  {deletingId === trip._id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+    <Layout>
+      <section className="w-full px-4 sm:px-8 lg:px-12 py-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+            <div>
+              <p className="text-xs uppercase tracking-wider font-semibold text-forest-700 mb-1">My collection</p>
+              <h1 className="font-display text-3xl sm:text-4xl font-bold text-ink-900">Saved trips</h1>
+              <p className="text-ink-500 mt-1">{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</p>
             </div>
-          ))}
+            <button onClick={() => navigate('/planner')} className="btn-primary px-5 py-3 self-start sm:self-end">
+              + Plan new trip
+            </button>
+          </div>
+
+          {error && (
+            <div className="bg-coral-50 border border-coral-100 text-coral-700 px-4 py-3 rounded-xl mb-6 text-sm">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="card p-6 animate-pulse">
+                  <div className="h-5 bg-cream-200 rounded w-2/3 mb-3" />
+                  <div className="h-3 bg-cream-200 rounded w-1/3 mb-4" />
+                  <div className="flex gap-2 mb-6">
+                    <div className="h-6 w-16 bg-cream-200 rounded-full" />
+                    <div className="h-6 w-16 bg-cream-200 rounded-full" />
+                  </div>
+                  <div className="h-9 bg-cream-200 rounded-lg" />
+                </div>
+              ))}
+            </div>
+          ) : trips.length === 0 && !error ? (
+            <div className="card p-12 text-center">
+              <p className="text-5xl mb-3">🧳</p>
+              <h2 className="font-display text-xl font-bold text-ink-900">No saved trips yet</h2>
+              <p className="text-ink-500 text-sm mt-2 mb-6 max-w-sm mx-auto">
+                Generate your first AI itinerary and it'll show up here.
+              </p>
+              <button onClick={() => navigate('/planner')} className="btn-primary px-6 py-3">
+                Plan your first trip
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {trips.map((trip) => (
+                <div key={trip._id} className="card p-6 flex flex-col hover:shadow-hover transition">
+                  <h2 className="font-display text-lg font-bold text-ink-900 mb-1">
+                    {trip.title || trip.destination}
+                  </h2>
+                  <p className="text-ink-500 text-sm mb-4">{trip.destination}</p>
+
+                  <div className="flex flex-wrap gap-1.5 mb-4 text-xs">
+                    <span className="bg-forest-50 text-forest-700 border border-forest-100 px-2.5 py-1 rounded-full">
+                      {trip.duration} days
+                    </span>
+                    <span className={`border px-2.5 py-1 rounded-full ${BUDGET_BADGE[trip.budget] || 'bg-cream-100 border-cream-200 text-ink-700'}`}>
+                      {trip.budget}
+                    </span>
+                    <span className="bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2.5 py-1 rounded-full">
+                      {trip.travelStyle}
+                    </span>
+                  </div>
+
+                  <p className="text-ink-400 text-xs mb-5">
+                    Saved {new Date(trip.createdAt).toLocaleDateString()}
+                  </p>
+
+                  <div className="mt-auto flex gap-2">
+                    <button
+                      onClick={() => navigate(`/trips/${trip._id}`)}
+                      className="flex-1 btn-primary py-2 text-sm"
+                    >
+                      View itinerary
+                    </button>
+                    <button
+                      onClick={() => handleDelete(trip._id)}
+                      disabled={deletingId === trip._id}
+                      className="btn-ghost text-coral-600 hover:bg-coral-50 px-3 py-2 text-sm"
+                      title="Delete trip"
+                    >
+                      {deletingId === trip._id ? '…' : '🗑'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+      </section>
+    </Layout>
   );
 }

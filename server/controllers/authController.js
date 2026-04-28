@@ -4,21 +4,41 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Helper function to generate JWT token
 const generateToken = (userId) => {
-  return jwt.sign(
-    { id: userId }, // Payload (what's inside the token)
-    process.env.JWT_SECRET, // Secret key (only backend knows this)
-    { expiresIn: "7d" }, // Token expires in 7 days
-  );
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// REGISTER: Create a new user
+// Mirrors client-side validation in SignupPage.jsx — must stay in sync.
+const validatePassword = (password) => {
+  const checks = {
+    length: typeof password === "string" && password.length >= 8,
+    uppercase: /[A-Z]/.test(password || ""),
+    number: /\d/.test(password || ""),
+    special: /[!@#$%^&*()_\-+=\[\]{};:'",.<>\/?\\|`~]/.test(password || ""),
+  };
+  const failed = [];
+  if (!checks.length) failed.push("at least 8 characters");
+  if (!checks.uppercase) failed.push("an uppercase letter");
+  if (!checks.number) failed.push("a number");
+  if (!checks.special) failed.push("a special character");
+  return failed;
+};
+
+const userResponse = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  bio: user.bio || "",
+  profilePicture: user.profilePicture || "",
+  homeCountry: user.homeCountry || "",
+  travelInterests: user.travelInterests || [],
+});
+
+// REGISTER
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Step 1: Validate input
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -26,7 +46,14 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Step 2: Check if user already exists
+    const passwordIssues = validatePassword(password);
+    if (passwordIssues.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Password must contain ${passwordIssues.join(", ")}.`,
+      });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -35,36 +62,22 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Step 3: Hash the password
     const salt = await bcrypt.genSalt(10);
-    // genSalt(10) creates random data. The number (10) is "cost factor"
-    // Higher = slower (more secure), lower = faster (less secure)
-    // 10 is industry standard
-
     const hashedPassword = await bcrypt.hash(password, salt);
-    // hash() turns plain password + salt into scrambled text
-    // Can never be reversed (one-way function)
 
-    // Step 4: Create user in database
     const user = await User.create({
       name,
       email,
-      password: hashedPassword, // Store HASHED password, not plain
+      password: hashedPassword,
     });
 
-    // Step 5: Generate JWT token
     const token = generateToken(user._id);
 
-    // Step 6: Return success response
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
+      user: userResponse(user),
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -76,12 +89,11 @@ exports.register = async (req, res) => {
   }
 };
 
-// LOGIN: Authenticate user and return token
+// LOGIN
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Step 1: Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -89,7 +101,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Step 2: Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
@@ -98,12 +109,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Step 3: Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    // compare() takes plain password and hashed password
-    // Returns true if they match, false otherwise
-    // It's safe because it uses the same hash function
-
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -111,19 +117,13 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Step 4: Generate JWT token
     const token = generateToken(user._id);
 
-    // Step 5: Return success response
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
+      user: userResponse(user),
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -135,12 +135,9 @@ exports.login = async (req, res) => {
   }
 };
 
-// GET CURRENT USER: Return user data (protected route)
+// GET CURRENT USER
 exports.getCurrentUser = async (req, res) => {
   try {
-    // req.user is added by the auth middleware (we'll create it next)
-    // It contains the user ID extracted from the JWT token
-
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -152,17 +149,54 @@ exports.getCurrentUser = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
+      user: userResponse(user),
     });
   } catch (error) {
     console.error("Get current user error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// UPDATE PROFILE — name, bio, profilePicture, homeCountry, travelInterests
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, bio, profilePicture, homeCountry, travelInterests } =
+      req.body;
+
+    const updates = {};
+    if (typeof name === "string" && name.trim()) updates.name = name.trim();
+    if (typeof bio === "string") updates.bio = bio;
+    if (typeof profilePicture === "string")
+      updates.profilePicture = profilePicture;
+    if (typeof homeCountry === "string") updates.homeCountry = homeCountry;
+    if (Array.isArray(travelInterests)) updates.travelInterests = travelInterests;
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated",
+      user: userResponse(user),
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error updating profile",
       error: error.message,
     });
   }

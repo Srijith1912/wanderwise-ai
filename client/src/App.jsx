@@ -13,32 +13,15 @@ import FeedPage from './pages/FeedPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ExplorePage from './pages/ExplorePage';
 
-
-/**
- * PROTECTED ROUTE COMPONENT
- * 
- * What it does:
- * 1. Check if user is logged in
- * 2. If YES → Show the page (e.g., DashboardPage)
- * 3. If NO → Redirect to login
- * 
- * Usage:
- * <ProtectedRoute>
- *   <DashboardPage />
- * </ProtectedRoute>
- * 
- * This ensures only logged-in users can see certain pages
- */
 const ProtectedRoute = ({ children }) => {
   const { user, isLoadingAuth } = useAuth();
 
-  // Wait for session restore to finish before deciding anything
   if (isLoadingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-cream-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-forest-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-ink-500 text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -49,61 +32,31 @@ const ProtectedRoute = ({ children }) => {
   return <Navigate to="/login" replace />;
 };
 
-/**
- * MAIN APP COMPONENT
- * 
- * What it does:
- * 1. Wraps everything with AuthProvider (makes auth available everywhere)
- * 2. Sets up routes with Router and Routes
- * 3. Defines public routes (login, signup) and protected routes (dashboard)
- * 
- * The structure is:
- * App
- * └─ AuthProvider (provides useAuth() hook to all children)
- *    └─ Router (enables page navigation)
- *       └─ Routes (defines all pages)
- */
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */}
-          {/* Anyone can access these without logging in */}
-          
+          {/* Public landing — Explore Destinations */}
+          <Route path="/" element={<ExplorePage />} />
+
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/explore" element={<ExplorePage />} />
 
-          {/* Protected Routes */}
-          {/* Only logged-in users can access these */}
-          
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-            path="/planner" 
-            element={
-              <ProtectedRoute>
-                  <TripPlannerPage />
-              </ProtectedRoute>
-            } 
-          />
+          {/* Legacy alias */}
+          <Route path="/explore" element={<Navigate to="/" replace />} />
 
+          {/* Protected routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/planner" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
           <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-
           <Route path="/trips" element={<ProtectedRoute><SavedTripsPage /></ProtectedRoute>} />
           <Route path="/trips/:id" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
 
-          {/* Redirect unknown routes to dashboard */}
-          {/* Or login if not authenticated */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

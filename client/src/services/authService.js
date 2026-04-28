@@ -2,134 +2,43 @@
 
 import axios from "axios";
 
-/**
- * WHAT THIS FILE DOES:
- *
- * This is an "API Service" - it handles all communication with the backend
- *
- * Think of it as a phone line to the backend:
- * - "Hey backend, I want to login"
- * - Backend responds with token
- * - "Hey backend, get my user info"
- * - Backend responds with user data
- */
-
-// Create axios instance with base URL
-// All requests to this instance will go to http://localhost:5000
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/api`
     : "/api",
 });
 
-// AXIOS INTERCEPTOR
-
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
     if (token) {
-      // Add token to Authorization header
-      // Format: "Authorization: Bearer <token>"
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-/**
- * REGISTER API CALL
- *
- * What it does:
- * 1. Sends POST request to /api/auth/register
- * 2. Backend creates user and returns token + user data
- *
- * Usage in AuthContext:
- * const { token, user } = await authService.register(name, email, password);
- */
 export const register = async (name, email, password) => {
-  try {
-    const response = await API.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-
-    // Response format from backend:
-    // {
-    //   success: true,
-    //   token: "eyJhbGciOi...",
-    //   user: { id: "507f...", name: "John", email: "john@example.com" }
-    // }
-
-    return {
-      token: response.data.token,
-      user: response.data.user,
-    };
-  } catch (error) {
-    // Throw error so AuthContext can handle it
-    throw error;
-  }
+  const response = await API.post("/auth/register", { name, email, password });
+  return { token: response.data.token, user: response.data.user };
 };
 
-/**
- * LOGIN API CALL
- *
- * What it does:
- * 1. Sends POST request to /api/auth/login
- * 2. Backend verifies credentials and returns token + user data
- *
- * Usage in AuthContext:
- * const { token, user } = await authService.login(email, password);
- */
 export const login = async (email, password) => {
-  try {
-    const response = await API.post("/auth/login", {
-      email,
-      password,
-    });
-
-    return {
-      token: response.data.token,
-      user: response.data.user,
-    };
-  } catch (error) {
-    throw error;
-  }
+  const response = await API.post("/auth/login", { email, password });
+  return { token: response.data.token, user: response.data.user };
 };
 
-/**
- * GET CURRENT USER API CALL
- *
- * What it does:
- * 1. Sends GET request to /api/auth/me (protected endpoint)
- * 2. Middleware checks token
- * 3. Backend returns current user data
- *
- * This is used to:
- * - Restore user session on page refresh
- * - Verify token is still valid
- *
- * Usage in AuthContext:
- * const user = await authService.getCurrentUser(token);
- */
 export const getCurrentUser = async (token) => {
-  try {
-    // Temporarily set the token for this request
-    const response = await API.get("/auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const response = await API.get("/auth/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data.user;
+};
 
-    return response.data.user;
-  } catch (error) {
-    throw error;
-  }
+export const updateProfile = async (updates) => {
+  const response = await API.put("/auth/profile", updates);
+  return response.data.user;
 };
 
 export default API;

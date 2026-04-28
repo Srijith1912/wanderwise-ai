@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true); // NEW — true until session restore completes
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
         }
       }
-      setIsLoadingAuth(false); // Done either way — token found or not
+      setIsLoadingAuth(false);
     };
 
     restoreAuth();
@@ -73,15 +73,27 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
+  const updateProfile = async (updates) => {
+    try {
+      const updated = await authService.updateProfile(updates);
+      setUser(updated);
+      return { success: true, user: updated };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to update profile';
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value = {
     user,
     token,
     isLoading,
-    isLoadingAuth, // NEW — exposed so ProtectedRoute can use it
+    isLoadingAuth,
     error,
     login,
     register,
     logout,
+    updateProfile,
     isAuthenticated: !!user && !!token,
   };
 

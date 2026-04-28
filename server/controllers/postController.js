@@ -1,5 +1,7 @@
 const Post = require("../models/Post");
 
+const POPULATE_FIELDS = "name email profilePicture";
+
 // @desc    Create a new post
 // @route   POST /api/posts
 // @access  Protected
@@ -19,8 +21,7 @@ const createPost = async (req, res) => {
       likes: [],
     });
 
-    // Populate author info before returning
-    const populated = await post.populate("userId", "name email");
+    const populated = await post.populate("userId", POPULATE_FIELDS);
 
     res.status(201).json({ post: populated });
   } catch (error) {
@@ -35,7 +36,7 @@ const createPost = async (req, res) => {
 const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("userId", "name email")
+      .populate("userId", POPULATE_FIELDS)
       .sort({ createdAt: -1 });
 
     res.status(200).json({ posts });
@@ -51,7 +52,7 @@ const getPosts = async (req, res) => {
 const getPostsByUser = async (req, res) => {
   try {
     const posts = await Post.find({ userId: req.params.userId })
-      .populate("userId", "name email")
+      .populate("userId", POPULATE_FIELDS)
       .sort({ createdAt: -1 });
 
     res.status(200).json({ posts });
@@ -76,10 +77,8 @@ const likePost = async (req, res) => {
     const alreadyLiked = post.likes.some((id) => id.toString() === userId);
 
     if (alreadyLiked) {
-      // Unlike — remove userId from likes
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
-      // Like — add userId to likes
       post.likes.push(userId);
     }
 

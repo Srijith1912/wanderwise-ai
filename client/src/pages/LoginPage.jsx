@@ -1,131 +1,147 @@
 // client/src/pages/LoginPage.jsx
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-/**
- * LOGIN PAGE
- * 
- * This page:
- * 1. Shows a form with email and password fields
- * 2. User fills and submits
- * 3. Calls useAuth().login() which calls backend API
- * 4. Backend returns token
- * 5. Redirect to dashboard
- */
 export default function LoginPage() {
-  // State for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState('');
 
-  // Get auth functions from context
   const { login, error, isLoading } = useAuth();
-
-  // For redirecting after login
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get('next') || '/';
 
-  /**
-   * HANDLE SUBMIT
-   * 
-   * What it does:
-   * 1. Prevent default form submission (page reload)
-   * 2. Validate inputs aren't empty
-   * 3. Call login() from context (makes API call)
-   * 4. If success, redirect to dashboard
-   * 5. If error, show error message (handled by context)
-   */
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Don't reload page
-
-    // Basic validation
+    e.preventDefault();
     if (!email || !password) {
-      alert('Please fill in all fields');
+      setLocalError('Please fill in all fields');
       return;
     }
-
-    // Call login from context
-    // This returns { success: true/false }
+    setLocalError('');
     const result = await login(email, password);
-
-    // If login successful, redirect to dashboard
-    if (result.success) {
-      navigate('/dashboard');
-    }
-    // If error, context shows error message (see error state in return)
+    if (result.success) navigate(next);
   };
 
+  const displayError = localError || error;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      {/* Container */}
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">WanderWise</h1>
-          <p className="text-gray-600">Welcome back, traveler</p>
+    <div className="min-h-screen w-full flex">
+      {/* Left visual */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1600&q=80"
+          alt="Travel"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-tr from-forest-900/80 via-forest-700/50 to-terracotta-500/30" />
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+          <Link to="/" className="flex items-center gap-2 text-white/90 hover:text-white">
+            <span className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
+              </svg>
+            </span>
+            <span className="font-display font-bold text-xl">WanderWise</span>
+          </Link>
+
+          <div>
+            <p className="font-display text-4xl font-bold leading-tight max-w-md">
+              Welcome back, traveler.
+            </p>
+            <p className="mt-3 text-white/85 max-w-md">
+              Pick up where you left off — your saved trips and travel feed are ready.
+            </p>
+          </div>
+
+          <p className="text-xs text-white/70">
+            "The world is a book and those who do not travel read only one page." — Augustine
+          </p>
         </div>
+      </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email Input */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
-            />
+      {/* Right form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-cream-100">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden mb-8">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-forest-500 to-forest-700 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
+                  <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
+                </svg>
+              </span>
+              <span className="font-display font-bold text-xl text-ink-900">WanderWise</span>
+            </Link>
           </div>
 
-          {/* Password Input */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={isLoading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-100"
-            />
-          </div>
+          <h1 className="font-display text-3xl font-bold text-ink-900 mb-2">Log in</h1>
+          <p className="text-ink-500 mb-8">Continue planning your next adventure.</p>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-          >
-            {isLoading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
+          {displayError && (
+            <div className="bg-coral-50 border border-coral-100 text-coral-700 px-4 py-3 rounded-xl mb-5 text-sm">
+              {displayError}
+            </div>
+          )}
 
-        {/* Link to Signup */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-ink-700 mb-1.5">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                disabled={isLoading}
+                className="input-field"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-ink-700 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  disabled={isLoading}
+                  className="input-field pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-500 hover:text-ink-800"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={isLoading} className="btn-primary w-full py-3 mt-2">
+              {isLoading ? 'Logging in…' : 'Log in'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-ink-600 text-sm">
             Don't have an account?{' '}
             <Link
-              to="/signup"
-              className="text-blue-600 hover:text-blue-700 font-semibold"
+              to={`/signup${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}
+              className="text-forest-700 hover:text-forest-800 font-semibold"
             >
               Sign up
             </Link>
+          </p>
+          <p className="mt-3 text-center text-ink-500 text-xs">
+            <Link to="/" className="hover:text-ink-700">← Back to explore</Link>
           </p>
         </div>
       </div>
