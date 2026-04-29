@@ -5,13 +5,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import DashboardPage from './pages/DashboardPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import SavedTripsPage from './pages/SavedTripsPage';
 import TripDetailPage from './pages/TripDetailPage';
 import FeedPage from './pages/FeedPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ExplorePage from './pages/ExplorePage';
+import SettingsPage from './pages/SettingsPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isLoadingAuth } = useAuth();
@@ -32,30 +32,38 @@ const ProtectedRoute = ({ children }) => {
   return <Navigate to="/login" replace />;
 };
 
+// Redirects /dashboard to the user's own profile (Dashboard merged into Profile).
+const DashboardRedirect = () => {
+  const { user, isLoadingAuth } = useAuth();
+  if (isLoadingAuth) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={`/profile/${user.id}`} replace />;
+};
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public landing — Explore Destinations */}
+          {/* Public landing — Explore */}
           <Route path="/" element={<ExplorePage />} />
 
-          {/* Public routes */}
+          {/* Public auth */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Legacy alias */}
+          {/* Legacy aliases */}
           <Route path="/explore" element={<Navigate to="/" replace />} />
+          <Route path="/dashboard" element={<DashboardRedirect />} />
 
-          {/* Protected routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          {/* Protected */}
           <Route path="/planner" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
           <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/trips" element={<ProtectedRoute><SavedTripsPage /></ProtectedRoute>} />
           <Route path="/trips/:id" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

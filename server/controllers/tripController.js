@@ -53,6 +53,7 @@ Return ONLY a valid JSON object in exactly this format, no extra text, no markdo
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
+      response_format: { type: "json_object" },
     });
 
     const rawText = response.choices[0].message.content.trim();
@@ -72,6 +73,120 @@ Return ONLY a valid JSON object in exactly this format, no extra text, no markdo
     }
 
     res.status(500).json({ message: "Server error generating trip" });
+  }
+};
+
+// @desc    Suggest real destinations from a possibly-typo'd input.
+// @route   POST /api/trips/suggest-destination
+// @access  Private
+// Uses gpt-4o-mini as a "did you mean" oracle. Cheap (~50–150 output tokens).
+const suggestDestination = async (req, res) => {
+  try {
+    const { input } = req.body;
+    if (!input || !input.trim()) {
+      return res.status(400).json({ message: "Input is required" });
+    }
+
+    const prompt = `The user typed "${input}" as a travel destination. It does not match a real place.
+Suggest up to 4 real, well-known travel destinations (cities or regions) the user might have meant.
+Reply ONLY with this JSON:
+{
+  "isRealPlace": boolean,
+  "canonical": "string or null — the canonical 'City, Country' if input is real, otherwise null",
+  "suggestions": ["City, Country", "City, Country", ...]
+}
+If the input is clearly already a real place, set isRealPlace true and put the canonical in canonical, suggestions can be empty. If it's gibberish or unclear, set isRealPlace false and provide your best guesses based on phonetic similarity, common typos, or context.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4,
+      response_format: { type: "json_object" },
+      max_tokens: 200,
+    });
+
+    const parsed = JSON.parse(response.choices[0].message.content);
+    res.status(200).json(parsed);
+  } catch (error) {
+    console.error("suggestDestination error:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to validate destination", suggestions: [] });
+  }
+};
+
+// @desc    Conversational refinement of an existing (or about-to-be-built) itinerary.
+// @route   POST /api/trips/refine
+// @access  Private
+// Body: { itinerary?, history: [{role, content}], userMessage, context? }
+// Returns: { reply, updatedItinerary?, suggestedDestination? }
+const refineItinerary = async (req, res) => {
+  try {
+    const { itinerary, history = [], userMessage, context } = req.body;
+
+    if (!userMessage || !userMessage.trim()) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+
+    const systemPrompt = itinerary
+      ? `You are a friendly AI travel-planning assistant helping the user refine their itinerary.
+The user's CURRENT itinerary is:
+${JSON.stringify(itinerary, null, 2)}
+
+Reply ONLY in JSON like this:
+{
+  "reply": "your conversational answer, 1-3 short sentences",
+  "updatedItinerary": null OR the FULL new itinerary object,
+  "suggestedDestination": null OR a "City, Country" string
+}
+
+Rules:
+- Set "updatedItinerary" ONLY when the user explicitly asks for a change. Return the full new object — do not omit fields. Keep the same structure: { destination, duration, budget, travelStyle, summary, tips, days: [{day, theme, activities: [{time, title, description}]}] }.
+- Set "suggestedDestination" only if the user wants to switch the trip to a different city.
+- Otherwise just answer their question with "reply" and leave the other fields null.
+- Be concise, warm, and proactive. If you change something, briefly mention what.`
+      : `You are a friendly AI travel-planning assistant helping the user pick or describe a destination before generating an itinerary.
+${context ? `Context the user has filled so far: ${JSON.stringify(context)}\n` : ""}
+Reply ONLY in JSON like this:
+{
+  "reply": "your conversational answer, 1-3 short sentences",
+  "updatedItinerary": null,
+  "suggestedDestination": null OR a "City, Country" string
+}
+
+If the user describes the kind of trip they want or asks for ideas, suggest 1 concrete destination in "suggestedDestination". Always set "updatedItinerary" to null since no itinerary exists yet.`;
+
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...history.slice(-10),
+      { role: "user", content: userMessage },
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.7,
+      response_format: { type: "json_object" },
+      max_tokens: 2500,
+    });
+
+    const parsed = JSON.parse(response.choices[0].message.content);
+
+    res.status(200).json({
+      reply: parsed.reply || "",
+      updatedItinerary: parsed.updatedItinerary || null,
+      suggestedDestination: parsed.suggestedDestination || null,
+    });
+  } catch (error) {
+    console.error("refineItinerary error:", error);
+    if (error instanceof SyntaxError) {
+      return res.status(500).json({
+        message: "AI returned invalid format, please try again",
+      });
+    }
+    res
+      .status(500)
+      .json({ message: "Server error during chat", error: error.message });
   }
 };
 
@@ -181,12 +296,10 @@ const updateTrip = async (req, res) => {
       return res.status(404).json({ message: "Trip not found" });
     }
 
-    // Ownership check
     if (trip.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Only allow title to be updated for now
     if (req.body.title !== undefined) {
       trip.title = req.body.title;
     }
@@ -205,4 +318,6 @@ module.exports = {
   getTripById,
   deleteTrip,
   updateTrip,
+  refineItinerary,
+  suggestDestination,
 };

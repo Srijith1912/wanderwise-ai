@@ -103,10 +103,10 @@ export default function ExplorePage() {
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-ink-900/60 via-ink-900/30 to-cream-100" />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink-900/55 via-ink-900/25 to-ink-900/35" />
         </div>
 
-        <div className="relative w-full px-4 sm:px-8 lg:px-12 py-20 sm:py-28">
+        <div className="relative w-full px-4 sm:px-8 lg:px-12 py-20 sm:py-24">
           <div className="max-w-5xl mx-auto text-center text-white">
             <span className="inline-block px-3 py-1 rounded-full bg-white/15 backdrop-blur text-xs font-medium tracking-wide uppercase">
               AI travel planner

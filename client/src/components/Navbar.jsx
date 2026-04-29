@@ -107,10 +107,8 @@ export default function Navbar() {
                       <p className="text-sm font-semibold text-ink-900 truncate">{user.name}</p>
                       <p className="text-xs text-ink-500 truncate">{user.email}</p>
                     </div>
-                    <Link to="/dashboard" className="block px-4 py-2 text-sm text-ink-700 hover:bg-cream-100">Dashboard</Link>
                     <Link to={`/profile/${user.id}`} className="block px-4 py-2 text-sm text-ink-700 hover:bg-cream-100">My profile</Link>
-                    <Link to="/trips" className="block px-4 py-2 text-sm text-ink-700 hover:bg-cream-100">My trips</Link>
-                    <Link to="/feed" className="block px-4 py-2 text-sm text-ink-700 hover:bg-cream-100">Travel feed</Link>
+                    <Link to="/settings" className="block px-4 py-2 text-sm text-ink-700 hover:bg-cream-100">Settings</Link>
                     <div className="border-t border-cream-200 my-1" />
                     <button
                       onClick={handleLogout}
@@ -152,8 +150,8 @@ export default function Navbar() {
             <NavItem to="/planner">Plan a trip</NavItem>
             {user && <NavItem to="/feed">Feed</NavItem>}
             {user && <NavItem to="/trips">My trips</NavItem>}
-            {user && <NavItem to="/dashboard">Dashboard</NavItem>}
             {user && <NavItem to={`/profile/${user.id}`}>My profile</NavItem>}
+            {user && <NavItem to="/settings">Settings</NavItem>}
             {!user && <NavItem to="/login">Log in</NavItem>}
           </div>
         )}

@@ -41,4 +41,17 @@ export const updateProfile = async (updates) => {
   return response.data.user;
 };
 
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await API.put("/auth/password", {
+    currentPassword,
+    newPassword,
+  });
+  return response.data;
+};
+
+export const changeEmail = async (currentPassword, newEmail) => {
+  const response = await API.put("/auth/email", { currentPassword, newEmail });
+  return response.data;
+};
+
 export default API;

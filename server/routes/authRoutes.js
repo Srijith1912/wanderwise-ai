@@ -10,5 +10,7 @@ router.post("/login", authController.login);
 
 router.get("/me", authMiddleware, authController.getCurrentUser);
 router.put("/profile", authMiddleware, authController.updateProfile);
+router.put("/password", authMiddleware, authController.changePassword);
+router.put("/email", authMiddleware, authController.changeEmail);
 
 module.exports = router;

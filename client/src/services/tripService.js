@@ -16,6 +16,29 @@ export const generateTrip = async (formData) => {
   return response.data;
 };
 
+export const refineItinerary = async ({
+  itinerary,
+  history,
+  userMessage,
+  context,
+}) => {
+  const response = await axios.post(
+    `${BASE}/refine`,
+    { itinerary, history, userMessage, context },
+    { headers: getAuthHeader() },
+  );
+  return response.data;
+};
+
+export const suggestDestination = async (input) => {
+  const response = await axios.post(
+    `${BASE}/suggest-destination`,
+    { input },
+    { headers: getAuthHeader() },
+  );
+  return response.data;
+};
+
 export const saveTrip = async (tripData) => {
   const response = await axios.post(`${BASE}/save`, tripData, {
     headers: getAuthHeader(),

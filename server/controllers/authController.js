@@ -161,6 +161,108 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
+// CHANGE PASSWORD — requires current password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Both current and new password are required",
+      });
+    }
+
+    const passwordIssues = validatePassword(newPassword);
+    if (passwordIssues.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `New password must contain ${passwordIssues.join(", ")}.`,
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.password);
+    if (!matches) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Current password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "Password updated" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error changing password",
+      error: error.message,
+    });
+  }
+};
+
+// CHANGE EMAIL — requires current password
+exports.changeEmail = async (req, res) => {
+  try {
+    const { currentPassword, newEmail } = req.body;
+
+    if (!currentPassword || !newEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new email are required",
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please enter a valid email" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.password);
+    if (!matches) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Password is incorrect" });
+    }
+
+    const conflict = await User.findOne({ email: newEmail });
+    if (conflict && conflict._id.toString() !== user._id.toString()) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Email is already in use" });
+    }
+
+    user.email = newEmail;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Email updated",
+      user: userResponse(user),
+    });
+  } catch (error) {
+    console.error("Change email error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error changing email",
+      error: error.message,
+    });
+  }
+};
+
 // UPDATE PROFILE — name, bio, profilePicture, homeCountry, travelInterests
 exports.updateProfile = async (req, res) => {
   try {
