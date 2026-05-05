@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { getDestinations } = require("../controllers/exploreController");
+const { getDestinations, getTrending } = require("../controllers/exploreController");
 
 router.get("/", getDestinations);
+router.get("/trending", getTrending);
 
 module.exports = router;

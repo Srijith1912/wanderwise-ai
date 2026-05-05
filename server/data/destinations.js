@@ -238,7 +238,7 @@ const destinations = [
   },
   {
     id: 18,
-    name: "Georgia (Country)",
+    name: "Georgia",
     country: "Georgia",
     continent: "Europe",
     vibe: "adventurous",

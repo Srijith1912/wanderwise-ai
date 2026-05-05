@@ -29,12 +29,9 @@ export default function PlannerChat({
   const [error, setError] = useState("");
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (open && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 200);
-    }
-  }, [open]);
+  // Note: we deliberately do NOT auto-focus the input. Auto-focusing on the always-open
+  // desktop instance forces the browser to scroll the page down to the input. Users tap
+  // or click the input themselves when they want to type.
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -61,7 +58,16 @@ export default function PlannerChat({
       });
 
       const reply = data.reply || "(no response)";
-      setHistory((h) => [...h, { role: "assistant", content: reply }]);
+      setHistory((h) => [
+        ...h,
+        {
+          role: "assistant",
+          content: reply,
+          itineraryUpdated: !!data.updatedItinerary,
+          quickReplies: Array.isArray(data.quickReplies) ? data.quickReplies : [],
+          imageQueries: Array.isArray(data.imageQueries) ? data.imageQueries : [],
+        },
+      ]);
 
       if (data.updatedItinerary && onItineraryUpdate) {
         onItineraryUpdate(data.updatedItinerary);
@@ -80,9 +86,16 @@ export default function PlannerChat({
     ? SUGGESTIONS_WITH_ITINERARY
     : SUGGESTIONS_NO_ITINERARY;
 
+  // Quick replies attached to the most recent assistant message (only while it's last).
+  const lastMsg = history[history.length - 1];
+  const activeQuickReplies =
+    lastMsg && lastMsg.role === "assistant" && Array.isArray(lastMsg.quickReplies)
+      ? lastMsg.quickReplies
+      : [];
+
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile backdrop — only shows when open and on small screens */}
       <div
         className={`fixed inset-0 bg-ink-900/40 z-40 transition-opacity lg:hidden ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -91,8 +104,10 @@ export default function PlannerChat({
       />
 
       <aside
-        className={`fixed lg:sticky bottom-0 lg:top-20 right-0 z-50 lg:z-auto w-full lg:w-[380px] xl:w-[420px] h-[90vh] lg:h-[calc(100vh-6rem)] bg-white border-l border-cream-300 lg:rounded-2xl lg:shadow-card flex flex-col transition-transform ${
-          open ? "translate-y-0 lg:translate-y-0" : "translate-y-full lg:translate-y-0"
+        className={`fixed bottom-0 right-0 lg:bottom-6 lg:right-6 z-50 w-full lg:w-[400px] xl:w-[420px] h-[85vh] lg:h-[600px] lg:max-h-[calc(100vh-7rem)] bg-white border border-cream-300 lg:rounded-2xl shadow-card flex flex-col transition-all duration-300 ${
+          open
+            ? "translate-y-0 opacity-100"
+            : "translate-y-full lg:translate-y-4 opacity-0 pointer-events-none"
         }`}
       >
         {/* Header */}
@@ -112,7 +127,7 @@ export default function PlannerChat({
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10"
+            className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10"
             aria-label="Close chat"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -123,7 +138,7 @@ export default function PlannerChat({
         </div>
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3 bg-cream-50">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 sm:px-5 py-4 space-y-3 bg-cream-50">
           {history.length === 0 && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl border border-cream-200 px-4 py-3 text-sm text-ink-700">
@@ -153,7 +168,7 @@ export default function PlannerChat({
           {history.map((msg, i) => (
             <div
               key={i}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
                 className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
@@ -164,6 +179,14 @@ export default function PlannerChat({
               >
                 {msg.content}
               </div>
+              {msg.role === "assistant" && msg.itineraryUpdated && (
+                <p className="mt-1 text-[11px] text-forest-700 font-medium inline-flex items-center gap-1">
+                  <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Itinerary updated
+                </p>
+              )}
             </div>
           ))}
 
@@ -174,6 +197,20 @@ export default function PlannerChat({
                 <span className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
+            </div>
+          )}
+
+          {!loading && activeQuickReplies.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {activeQuickReplies.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => send(q)}
+                  className="text-xs bg-white hover:bg-forest-50 hover:text-forest-700 border border-cream-300 hover:border-forest-300 text-ink-700 px-2.5 py-1.5 rounded-full transition"
+                >
+                  {q}
+                </button>
+              ))}
             </div>
           )}
 

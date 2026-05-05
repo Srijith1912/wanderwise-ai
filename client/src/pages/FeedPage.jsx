@@ -9,15 +9,18 @@ import Avatar from '../components/Avatar';
 const isProbablyImageUrl = (url) =>
   /^https?:\/\//i.test(url) &&
   (/\.(png|jpe?g|gif|webp|avif|svg)(\?.*)?$/i.test(url) ||
-    /(unsplash|imgur|cloudinary|googleusercontent|pexels|pixabay|images\.|cdn\.|media\.)/i.test(url));
+    /(unsplash|imgur|i\.ibb\.co|ibb\.co|postimg|flickr|staticflickr|cloudinary|googleusercontent|pexels|pixabay|images\.|cdn\.|media\.)/i.test(url));
 
-const formatTimeAgo = (dateStr) => {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+const IMAGE_URL_HINT =
+  "That doesn't look like a direct image link. Make sure the URL ends in .jpg, .png, .gif, or .webp — on imgbb, right-click the image and pick 'Copy image address'.";
+
+const formatPostTime = (dateStr) => {
+  const date = new Date(dateStr);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
-  return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 const formatCount = (n) => {
@@ -56,6 +59,7 @@ export default function FeedPage() {
   const [postError, setPostError] = useState('');
   const [tab, setTab] = useState('latest');
   const [popping, setPopping] = useState(null);
+  const [sharedPostId, setSharedPostId] = useState(null);
 
   const dailyTip = useMemo(() => TRAVEL_TIPS[Math.floor(Date.now() / 86400000) % TRAVEL_TIPS.length], []);
 
@@ -89,7 +93,7 @@ export default function FeedPage() {
       return;
     }
     if (imageUrl && !isProbablyImageUrl(imageUrl)) {
-      setPostError("That doesn't look like an image URL — paste a direct link to an image.");
+      setPostError(IMAGE_URL_HINT);
       return;
     }
     try {
@@ -359,7 +363,7 @@ export default function FeedPage() {
                             <p className="font-semibold text-ink-900 text-sm group-hover:text-forest-700 transition truncate">
                               {isOwner ? 'You' : post.userId?.name}
                             </p>
-                            <p className="text-xs text-ink-500">{formatTimeAgo(post.createdAt)} ago</p>
+                            <p className="text-xs text-ink-500">{formatPostTime(post.createdAt)}</p>
                           </div>
                         </button>
                         {post.destinationTag && (
@@ -425,15 +429,32 @@ export default function FeedPage() {
                         </button>
 
                         <button
-                          onClick={() => navigator.clipboard?.writeText(window.location.origin + `/feed#${post._id}`)}
+                          onClick={() => {
+                            const url = window.location.origin + `/feed#${post._id}`;
+                            navigator.clipboard?.writeText(url).then(() => {
+                              setSharedPostId(post._id);
+                              setTimeout(() => setSharedPostId((id) => (id === post._id ? null : id)), 2000);
+                            });
+                          }}
                           title="Copy link"
                           className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-ink-600 hover:text-forest-700 hover:bg-forest-50 transition"
                         >
-                          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                          </svg>
-                          <span className="text-sm">Share</span>
+                          {sharedPostId === post._id ? (
+                            <>
+                              <svg viewBox="0 0 24 24" className="w-5 h-5 text-forest-700" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              <span className="text-sm text-forest-700 font-medium">Link copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                              </svg>
+                              <span className="text-sm">Share</span>
+                            </>
+                          )}
                         </button>
 
                         <span className="ml-auto text-xs text-ink-400">

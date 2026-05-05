@@ -47,9 +47,35 @@
     color-scheme: light;
   }
 
+  select {
+    padding-right: 1.5rem;
+  }
+
   input::placeholder,
   textarea::placeholder {
     color: #9AA1AC;
+  }
+}
+
+@layer utilities {
+  /* Always-visible thin scrollbar for chat panels and other tall scroll areas */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #D6CFBF transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #D6CFBF;
+    border-radius: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #B7AE96;
   }
 }
 

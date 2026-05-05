@@ -5,6 +5,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Models — cheap one for low-stakes typo correction, stronger one for actual content generation.
+const SMART_MODEL = "gpt-4o";
+const CHEAP_MODEL = "gpt-4o-mini";
+
 // @desc    Generate a trip itinerary using AI
 // @route   POST /api/trips/generate
 // @access  Private
@@ -40,17 +44,19 @@ Return ONLY a valid JSON object in exactly this format, no extra text, no markdo
       "day": 1,
       "theme": "short theme for the day",
       "activities": [
-        { "time": "Morning", "title": "Activity name", "description": "What to do and why it's great" },
-        { "time": "Afternoon", "title": "Activity name", "description": "What to do and why it's great" },
-        { "time": "Evening", "title": "Activity name", "description": "What to do and why it's great" }
+        { "time": "Morning", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "2-4 word photo-search phrase for this exact place/landmark, e.g. 'Eiffel Tower'. Be specific and visual." },
+        { "time": "Afternoon", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "..." },
+        { "time": "Evening", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "..." }
       ]
     }
   ]
 }
+
+For imageQuery: pick a recognizable landmark, neighborhood, or visual scene tied to that activity (e.g. "Sensoji Temple", "Shibuya Crossing", "Tsukiji fish market"). Avoid generic words like "restaurant", "lunch", or "museum" alone — combine with the place name when needed.
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: SMART_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       response_format: { type: "json_object" },
@@ -87,18 +93,23 @@ const suggestDestination = async (req, res) => {
       return res.status(400).json({ message: "Input is required" });
     }
 
-    const prompt = `The user typed "${input}" as a travel destination. It does not match a real place.
-Suggest up to 4 real, well-known travel destinations (cities or regions) the user might have meant.
+    const prompt = `The user typed "${input}" as a travel destination. Help validate it.
+
 Reply ONLY with this JSON:
 {
   "isRealPlace": boolean,
   "canonical": "string or null — the canonical 'City, Country' if input is real, otherwise null",
   "suggestions": ["City, Country", "City, Country", ...]
 }
-If the input is clearly already a real place, set isRealPlace true and put the canonical in canonical, suggestions can be empty. If it's gibberish or unclear, set isRealPlace false and provide your best guesses based on phonetic similarity, common typos, or context.`;
+
+Rules:
+- If the input is a clearly correctly-spelled, well-known travel destination (e.g. "paris", "tokyo", "barcelona", "rome", "bali", "london"), set isRealPlace=true, put the canonical 'City, Country' in canonical, and leave suggestions as []. Do NOT suggest alternatives in this case.
+- Only populate suggestions when the input has a clear misspelling or typo (off by 1-3 letters from a famous place — e.g. "tokio" → "Tokyo, Japan"; "barcalona" → "Barcelona, Spain"; "prauge" → "Prague, Czechia"). The misspelled version should NOT itself be a different famous destination.
+- Be conservative: if there's any reasonable chance the user typed exactly what they meant, do NOT suggest alternatives.
+- If the input is gibberish or not a place, set isRealPlace=false and provide up to 4 best guesses.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: CHEAP_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
       response_format: { type: "json_object" },
@@ -135,26 +146,40 @@ ${JSON.stringify(itinerary, null, 2)}
 
 Reply ONLY in JSON like this:
 {
-  "reply": "your conversational answer, 1-3 short sentences",
+  "reply": "your conversational answer, 1-3 short sentences. If you changed something, briefly say what.",
   "updatedItinerary": null OR the FULL new itinerary object,
-  "suggestedDestination": null OR a "City, Country" string
+  "suggestedDestination": null OR a "City, Country" string,
+  "quickReplies": ["short option 1", "short option 2", ...] (2-4 items, optional),
+  "imageQueries": ["Eiffel Tower", "Tokyo skyline"] (0-3 short photo-search phrases for places/activities mentioned in your reply, optional)
 }
 
-Rules:
-- Set "updatedItinerary" ONLY when the user explicitly asks for a change. Return the full new object — do not omit fields. Keep the same structure: { destination, duration, budget, travelStyle, summary, tips, days: [{day, theme, activities: [{time, title, description}]}] }.
-- Set "suggestedDestination" only if the user wants to switch the trip to a different city.
-- Otherwise just answer their question with "reply" and leave the other fields null.
-- Be concise, warm, and proactive. If you change something, briefly mention what.`
+CRITICAL RULES on updatedItinerary:
+- WHENEVER the user asks for ANY change to the itinerary — add an activity, remove one, swap days, change pace, replace a meal, add a stop, change theme, "more X", "less Y", "make day N about Z", "add some hidden gems", reorder, retheme, etc. — you MUST return the COMPLETE updated itinerary in "updatedItinerary".
+- The returned itinerary must keep the SAME structure: { destination, duration, budget, travelStyle, summary, tips, days: [{day, theme, activities: [{time, title, description}]}] }. Include EVERY field, even ones you didn't change. Do not omit days or activities.
+- Set "updatedItinerary" to null ONLY when the user is asking a question or chatting (e.g. "what's the best time to visit?", "tell me about the food").
+- If the user wants to switch the trip to a different city entirely, also fill "suggestedDestination" with the canonical "City, Country".
+
+quickReplies: 2-4 short next-step prompts the user might tap (e.g. "Add a food tour", "Make day 2 lighter", "Suggest a hidden gem"). Tailor them to what was just discussed. Omit or set to [] if nothing useful comes to mind.
+
+imageQueries: 0-3 short, photo-search-friendly phrases for the most visual places/activities you mentioned (e.g. "Eiffel Tower at sunset", "Sensoji temple"). Use specific landmark or scene names, 2-4 words each. Omit or set to [] if nothing visual was discussed.
+
+Be concise, warm, and proactive.`
       : `You are a friendly AI travel-planning assistant helping the user pick or describe a destination before generating an itinerary.
 ${context ? `Context the user has filled so far: ${JSON.stringify(context)}\n` : ""}
 Reply ONLY in JSON like this:
 {
   "reply": "your conversational answer, 1-3 short sentences",
   "updatedItinerary": null,
-  "suggestedDestination": null OR a "City, Country" string
+  "suggestedDestination": null OR a "City, Country" string,
+  "quickReplies": ["short option 1", "short option 2", ...] (2-4 items, optional),
+  "imageQueries": ["Eiffel Tower"] (0-3 short photo-search phrases for places mentioned, optional)
 }
 
-If the user describes the kind of trip they want or asks for ideas, suggest 1 concrete destination in "suggestedDestination". Always set "updatedItinerary" to null since no itinerary exists yet.`;
+If the user describes the kind of trip they want or asks for ideas, suggest 1 concrete destination in "suggestedDestination". Always set "updatedItinerary" to null since no itinerary exists yet.
+
+quickReplies: 2-4 short next-step prompts (e.g. "Sure, plan it", "Somewhere else", "Tell me more"). Tailor to context.
+
+imageQueries: 0-3 short, photo-search-friendly phrases for places mentioned (e.g. "Santorini cliffs", "Reykjavik northern lights"). 2-4 words each.`;
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -163,7 +188,7 @@ If the user describes the kind of trip they want or asks for ideas, suggest 1 co
     ];
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: SMART_MODEL,
       messages,
       temperature: 0.7,
       response_format: { type: "json_object" },
@@ -176,6 +201,8 @@ If the user describes the kind of trip they want or asks for ideas, suggest 1 co
       reply: parsed.reply || "",
       updatedItinerary: parsed.updatedItinerary || null,
       suggestedDestination: parsed.suggestedDestination || null,
+      quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies.slice(0, 4) : [],
+      imageQueries: Array.isArray(parsed.imageQueries) ? parsed.imageQueries.slice(0, 3) : [],
     });
   } catch (error) {
     console.error("refineItinerary error:", error);

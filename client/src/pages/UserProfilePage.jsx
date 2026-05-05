@@ -5,6 +5,7 @@ import { getPostsByUser } from '../services/postService';
 import { getTrips } from '../services/tripService';
 import Layout from '../components/Layout';
 import Avatar from '../components/Avatar';
+import SmartImage from '../components/SmartImage';
 
 const TRAVEL_INTEREST_OPTIONS = [
   'Food', 'Culture', 'Nature', 'Adventure', 'History', 'Shopping', 'Nightlife', 'Art', 'Beaches', 'Mountains', 'Cities',
@@ -13,7 +14,10 @@ const TRAVEL_INTEREST_OPTIONS = [
 const isProbablyImageUrl = (url) =>
   /^https?:\/\//i.test(url) &&
   (/\.(png|jpe?g|gif|webp|avif|svg)(\?.*)?$/i.test(url) ||
-    /(unsplash|imgur|cloudinary|googleusercontent|pexels|pixabay|images\.|cdn\.|media\.)/i.test(url));
+    /(unsplash|imgur|i\.ibb\.co|ibb\.co|postimg|flickr|staticflickr|cloudinary|googleusercontent|pexels|pixabay|images\.|cdn\.|media\.)/i.test(url));
+
+const IMAGE_URL_HINT =
+  "That doesn't look like a direct image link. Make sure the URL ends in .jpg, .png, .gif, or .webp — on imgbb, right-click the image and pick 'Copy image address'.";
 
 const QuickAction = ({ icon, label, onClick, accent }) => (
   <button
@@ -47,6 +51,7 @@ export default function UserProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [savedFlash, setSavedFlash] = useState('');
+  const [imageLoadStatus, setImageLoadStatus] = useState('idle'); // 'idle' | 'loading' | 'ok' | 'failed'
 
   // Tabs
   const [tab, setTab] = useState('posts');
@@ -62,6 +67,35 @@ export default function UserProfilePage() {
       setTravelInterests(user.travelInterests || []);
     }
   }, [user]);
+
+  // Live-test the profile picture URL — debounced. The pattern check (isProbablyImageUrl)
+  // catches obvious junk; this catches "looks like an image URL but actually returns a 404 or HTML".
+  useEffect(() => {
+    if (!profilePicture) {
+      setImageLoadStatus('idle');
+      return;
+    }
+    if (!isProbablyImageUrl(profilePicture)) {
+      setImageLoadStatus('failed');
+      return;
+    }
+    setImageLoadStatus('loading');
+    const timer = setTimeout(() => {
+      const probe = new Image();
+      let settled = false;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        setImageLoadStatus(ok ? 'ok' : 'failed');
+      };
+      probe.onload = () => finish(true);
+      probe.onerror = () => finish(false);
+      probe.src = profilePicture;
+      // Safety timeout in case the host hangs
+      setTimeout(() => finish(false), 8000);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [profilePicture]);
 
   useEffect(() => {
     let active = true;
@@ -115,7 +149,13 @@ export default function UserProfilePage() {
 
   const handleSaveProfile = async () => {
     if (profilePicture && !isProbablyImageUrl(profilePicture)) {
-      setProfileError("That doesn't look like an image URL — paste a direct link to an image.");
+      setProfileError(IMAGE_URL_HINT);
+      return;
+    }
+    if (profilePicture && imageLoadStatus === 'failed') {
+      setProfileError(
+        "We couldn't load that image. On Imgur, right-click the image itself and pick 'Copy image address' (the URL should start with i.imgur.com and end in .jpg or .png).",
+      );
       return;
     }
     setSavingProfile(true);
@@ -148,25 +188,26 @@ export default function UserProfilePage() {
               <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)' }} />
             </div>
 
-            <div className="px-6 sm:px-8 pb-6 -mt-12 sm:-mt-14">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                <Avatar name={profileName} src={profilePic} size="xl" ring />
-                {isOwnProfile && (
-                  <div className="flex flex-wrap items-center gap-2 sm:pb-2">
-                    <button onClick={() => setEditing((v) => !v)} className="btn-secondary text-sm px-4 py-2">
-                      {editing ? 'Close editor' : 'Edit profile'}
-                    </button>
-                    <button onClick={() => navigate('/settings')} className="btn-ghost text-sm">
-                      ⚙ Settings
-                    </button>
-                    {savedFlash && <p className="text-forest-700 text-xs font-medium ml-2">{savedFlash}</p>}
-                  </div>
-                )}
-              </div>
+            {/* Avatar floats over the cover; buttons + content sit below it */}
+            <div className="relative z-10 px-6 sm:px-8 -mt-14 sm:-mt-16">
+              <Avatar name={profileName} src={profilePic} size="xl" className="ring-4 ring-white shadow-card" />
+            </div>
 
-              <div className="mt-4">
+            <div className="px-6 sm:px-8 pb-6 pt-4">
+              {isOwnProfile && (
+                <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+                  <button onClick={() => setEditing((v) => !v)} className="btn-secondary text-sm px-4 py-2">
+                    {editing ? 'Close editor' : 'Edit profile'}
+                  </button>
+                  <button onClick={() => navigate('/settings')} className="btn-ghost text-sm">
+                    ⚙ Settings
+                  </button>
+                  {savedFlash && <p className="text-forest-700 text-xs font-medium ml-2">{savedFlash}</p>}
+                </div>
+              )}
+
+              <div>
                 <h1 className="font-display text-3xl font-bold text-ink-900">{profileName}</h1>
-                {isOwnProfile && <p className="text-ink-500 text-sm mt-0.5">{user.email}</p>}
 
                 <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-ink-500">
                   {profileLocation && (
@@ -242,6 +283,21 @@ export default function UserProfilePage() {
                       />
                       <Avatar name={name} src={profilePicture} size="md" />
                     </div>
+                    {profilePicture && (
+                      <p className={`mt-1.5 text-xs ${
+                        imageLoadStatus === 'ok' ? 'text-forest-700'
+                          : imageLoadStatus === 'failed' ? 'text-coral-600'
+                          : 'text-ink-500'
+                      }`}>
+                        {imageLoadStatus === 'loading' && 'Checking image…'}
+                        {imageLoadStatus === 'ok' && '✓ Image loads correctly.'}
+                        {imageLoadStatus === 'failed' && (
+                          <>
+                            That URL didn't return an image. On Imgur use <strong>Copy image address</strong> from the image itself — it should look like <code>https://i.imgur.com/xxxx.jpg</code>.
+                          </>
+                        )}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -419,17 +475,28 @@ export default function UserProfilePage() {
                   <button
                     key={trip._id}
                     onClick={() => navigate(`/trips/${trip._id}`)}
-                    className="card p-5 text-left hover:shadow-hover transition flex flex-col"
+                    className="card overflow-hidden text-left hover:shadow-hover transition flex flex-col"
                   >
-                    <p className="font-display font-bold text-ink-900 mb-1">{trip.title || trip.destination}</p>
-                    <p className="text-sm text-ink-500 mb-3">{trip.destination}</p>
-                    <div className="flex flex-wrap gap-1.5 text-xs">
-                      <span className="bg-forest-50 text-forest-700 border border-forest-100 px-2.5 py-1 rounded-full">
-                        {trip.duration} days
-                      </span>
-                      <span className="bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2.5 py-1 rounded-full">
-                        {trip.budget}
-                      </span>
+                    <div className="relative h-32 overflow-hidden">
+                      <SmartImage
+                        query={trip.destination}
+                        alt={trip.destination}
+                        size={600}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink-900/55 to-transparent" />
+                    </div>
+                    <div className="p-4">
+                      <p className="font-display font-bold text-ink-900 mb-1 truncate">{trip.title || trip.destination}</p>
+                      <p className="text-sm text-ink-500 mb-3 truncate">{trip.destination}</p>
+                      <div className="flex flex-wrap gap-1.5 text-xs">
+                        <span className="bg-forest-50 text-forest-700 border border-forest-100 px-2.5 py-1 rounded-full">
+                          {trip.duration} days
+                        </span>
+                        <span className="bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2.5 py-1 rounded-full">
+                          {trip.budget}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 ))}

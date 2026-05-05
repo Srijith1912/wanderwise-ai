@@ -1,4 +1,4 @@
-// Round avatar — falls back to initials over a deterministic earthy gradient.
+import { useEffect, useState } from "react";
 
 const PALETTE = [
   "from-forest-500 to-forest-700",
@@ -41,16 +41,21 @@ export default function Avatar({
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.sm;
   const ringClass = ring ? "ring-2 ring-white shadow-soft" : "";
 
-  if (src) {
+  // Reset failed flag whenever the src prop changes so a new URL gets a fresh attempt.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  const showImage = src && !failed;
+
+  if (showImage) {
     return (
       <img
         src={src}
         alt={name || "User"}
-        className={`${sizeClass} ${ringClass} rounded-full object-cover bg-cream-200 ${className}`}
-        onError={(e) => {
-          e.target.style.display = "none";
-          e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
-        }}
+        onError={() => setFailed(true)}
+        className={`${sizeClass} ${ringClass} rounded-full object-cover bg-cream-200 shrink-0 ${className}`}
       />
     );
   }
@@ -59,7 +64,7 @@ export default function Avatar({
     <div
       className={`${sizeClass} ${ringClass} rounded-full bg-gradient-to-br ${gradientFor(
         name || "?",
-      )} text-white font-semibold flex items-center justify-center select-none ${className}`}
+      )} text-white font-semibold flex items-center justify-center select-none shrink-0 ${className}`}
     >
       {initialsFor(name)}
     </div>

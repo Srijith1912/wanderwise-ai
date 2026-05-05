@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { deleteTripById, getTripById, updateTrip } from '../services/tripService';
 import MapView from '../components/MapView';
 import Layout from '../components/Layout';
+import SmartImage from '../components/SmartImage';
 
 export default function TripDetailPage() {
   const { id } = useParams();
@@ -90,10 +91,15 @@ export default function TripDetailPage() {
             ← Back to my trips
           </button>
 
-          {/* Hero card */}
-          <div className="rounded-3xl p-8 mb-6 text-white shadow-card bg-gradient-to-br from-forest-600 to-forest-800 relative overflow-hidden">
-            <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-terracotta-400/20 blur-3xl" />
-            <div className="absolute -left-12 -bottom-12 w-48 h-48 rounded-full bg-coral-400/20 blur-3xl" />
+          {/* Hero card — destination photo behind a dark scrim */}
+          <div className="rounded-3xl p-8 mb-6 text-white shadow-card relative overflow-hidden min-h-[260px]">
+            <SmartImage
+              query={trip.destination}
+              alt={trip.destination}
+              size={1200}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-ink-900/70 via-ink-900/50 to-forest-900/60" />
 
             <div className="relative">
               <p className="text-xs uppercase tracking-wider text-white/70 font-semibold mb-2">Saved itinerary</p>
@@ -178,10 +184,17 @@ export default function TripDetailPage() {
                       <span className="text-xs font-medium text-forest-700 bg-forest-50 px-2 py-1 rounded-lg w-20 text-center shrink-0 h-fit">
                         {activity.time}
                       </span>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-ink-900">{activity.title}</p>
                         <p className="text-sm text-ink-500">{activity.description}</p>
                       </div>
+                      <SmartImage
+                        query={activity.imageQuery || `${activity.title} ${trip.destination}`}
+                        alt={activity.title}
+                        size={200}
+                        loading="lazy"
+                        className="w-20 h-14 object-cover rounded-lg border border-cream-200 bg-cream-100 shrink-0"
+                      />
                     </div>
                   ))}
                 </div>

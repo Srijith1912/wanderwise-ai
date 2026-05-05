@@ -1,21 +1,27 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getDestinations } from '../services/exploreService';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getDestinations, getTrending } from '../services/exploreService';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
+import DestinationInput from '../components/DestinationInput';
+import SmartImage from '../components/SmartImage';
+
+const formatPlace = (name, country) => {
+  if (!country) return name;
+  if (name && country && name.toLowerCase() === country.toLowerCase()) return country;
+  return `${name}, ${country}`;
+};
 
 const CONTINENTS = ['All', 'Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
-const BUDGETS = [
-  { key: 'All', label: 'All budgets' },
-  { key: 'budget', label: 'Budget' },
-  { key: 'mid', label: 'Mid-range' },
-  { key: 'high', label: 'Luxury' },
-];
-const VIBES = [
-  { key: 'All', label: 'All vibes' },
-  { key: 'adventurous', label: 'Adventurous' },
-  { key: 'peaceful', label: 'Peaceful' },
-  { key: 'relaxed', label: 'Relaxed' },
+
+const CATEGORY_CHIPS = [
+  { key: 'all', label: 'All', icon: '🌍' },
+  { key: 'adventurous', label: 'Adventure', icon: '🏔', vibe: 'adventurous' },
+  { key: 'peaceful', label: 'Peaceful escape', icon: '🌿', vibe: 'peaceful' },
+  { key: 'relaxed', label: 'Relax & beachy', icon: '🌴', vibe: 'relaxed' },
+  { key: 'budget', label: 'Budget-friendly', icon: '💸', budget: 'budget' },
+  { key: 'mid', label: 'Mid-range', icon: '✈️', budget: 'mid' },
+  { key: 'high', label: 'Luxury', icon: '💎', budget: 'high' },
 ];
 
 const VIBE_BADGE = {
@@ -34,15 +40,45 @@ const VIBE_LABEL = { adventurous: 'Adventurous', peaceful: 'Peaceful', relaxed: 
 export default function ExplorePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ continent: '', budget: '', vibe: '' });
 
+  // Weekly AI-generated trending picks (cached server-side, max 1 fetch per visitor)
+  const [trending, setTrending] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getTrending()
+      .then((data) => {
+        if (active) setTrending(data?.destinations || []);
+      })
+      .catch(() => {
+        if (active) setTrending([]);
+      })
+      .finally(() => {
+        if (active) setTrendingLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Hero quick-plan form
   const [heroDestination, setHeroDestination] = useState('');
   const [heroDuration, setHeroDuration] = useState(5);
   const [heroBudget, setHeroBudget] = useState('moderate');
+
+  useEffect(() => {
+    const tag = searchParams.get('tag');
+    if (tag) {
+      setHeroDestination(tag);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let active = true;
@@ -88,15 +124,15 @@ export default function ExplorePage() {
   );
 
   const handleQuickPick = (dest) => {
-    setHeroDestination(`${dest.name}, ${dest.country}`);
+    setHeroDestination(formatPlace(dest.name, dest.country));
     document.getElementById('hero-destination')?.focus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
+      {/* Hero — fills the viewport below the navbar so featured destinations sit just past the fold */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80"
@@ -106,7 +142,7 @@ export default function ExplorePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-ink-900/55 via-ink-900/25 to-ink-900/35" />
         </div>
 
-        <div className="relative w-full px-4 sm:px-8 lg:px-12 py-20 sm:py-24">
+        <div className="relative w-full px-4 sm:px-8 lg:px-12 py-12">
           <div className="max-w-5xl mx-auto text-center text-white">
             <span className="inline-block px-3 py-1 rounded-full bg-white/15 backdrop-blur text-xs font-medium tracking-wide uppercase">
               AI travel planner
@@ -122,20 +158,19 @@ export default function ExplorePage() {
           {/* Quick-plan card */}
           <form
             onSubmit={handlePlan}
-            className="relative mt-10 max-w-4xl mx-auto bg-white/95 backdrop-blur rounded-2xl shadow-card p-3 sm:p-3 grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto] gap-2"
+            className="relative mt-10 max-w-4xl mx-auto bg-white/95 backdrop-blur rounded-2xl shadow-card p-3 sm:p-3 grid grid-cols-1 sm:grid-cols-[2fr_0.8fr_1.3fr_auto] gap-2"
           >
-            <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center gap-3 px-3 py-2 relative">
               <svg viewBox="0 0 24 24" className="w-5 h-5 text-forest-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="10" r="3" />
                 <path d="M12 2a8 8 0 0 0-8 8c0 5 8 12 8 12s8-7 8-12a8 8 0 0 0-8-8z" />
               </svg>
-              <input
+              <DestinationInput
                 id="hero-destination"
-                type="text"
                 value={heroDestination}
-                onChange={(e) => setHeroDestination(e.target.value)}
+                onChange={setHeroDestination}
                 placeholder="Where to? (e.g. Tokyo, Bali, Lisbon)"
-                className="w-full bg-transparent border-0 outline-none text-ink-900 placeholder-ink-400 text-base"
+                inputClassName="w-full bg-transparent border-0 outline-none text-ink-900 placeholder-ink-400 text-base"
               />
             </div>
             <div className="flex items-center gap-2 px-3 py-2 border-t sm:border-t-0 sm:border-l border-cream-300">
@@ -181,52 +216,114 @@ export default function ExplorePage() {
 
       {/* Filters bar */}
       <section className="bg-cream-100 border-b border-cream-300 sticky top-16 z-20">
-        <div className="w-full px-4 sm:px-8 lg:px-12 py-4 flex flex-wrap items-center gap-3">
-          <h2 className="font-display text-xl font-bold text-ink-900 mr-2">
-            Featured destinations
-          </h2>
+        <div className="w-full px-4 sm:px-8 lg:px-12 py-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-xl font-bold text-ink-900 mr-2">
+              Featured destinations
+            </h2>
 
-          <select
-            value={filters.continent || 'All'}
-            onChange={(e) => setFilter('continent', e.target.value)}
-            className="border border-cream-300 rounded-xl px-3 py-2 text-sm bg-white text-ink-800 focus:outline-none focus:ring-2 focus:ring-forest-500"
-          >
-            {CONTINENTS.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+            <select
+              value={filters.continent || 'All'}
+              onChange={(e) => setFilter('continent', e.target.value)}
+              className="border border-cream-300 rounded-xl px-3 py-2 text-sm bg-white text-ink-800 focus:outline-none focus:ring-2 focus:ring-forest-500"
+            >
+              {CONTINENTS.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
 
-          <select
-            value={filters.budget || 'All'}
-            onChange={(e) => setFilter('budget', e.target.value)}
-            className="border border-cream-300 rounded-xl px-3 py-2 text-sm bg-white text-ink-800 focus:outline-none focus:ring-2 focus:ring-forest-500"
-          >
-            {BUDGETS.map((b) => (
-              <option key={b.key} value={b.key}>{b.label}</option>
-            ))}
-          </select>
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="text-sm text-coral-600 hover:underline">
+                Clear filters
+              </button>
+            )}
 
-          <select
-            value={filters.vibe || 'All'}
-            onChange={(e) => setFilter('vibe', e.target.value)}
-            className="border border-cream-300 rounded-xl px-3 py-2 text-sm bg-white text-ink-800 focus:outline-none focus:ring-2 focus:ring-forest-500"
-          >
-            {VIBES.map((v) => (
-              <option key={v.key} value={v.key}>{v.label}</option>
-            ))}
-          </select>
+            <span className="text-sm text-ink-500 ml-auto">
+              {loading ? 'Loading…' : `${destinations.length} destination${destinations.length !== 1 ? 's' : ''}`}
+            </span>
+          </div>
 
-          {hasActiveFilters && (
-            <button onClick={clearFilters} className="text-sm text-coral-600 hover:underline">
-              Clear filters
-            </button>
-          )}
-
-          <span className="text-sm text-ink-500 ml-auto">
-            {loading ? 'Loading…' : `${destinations.length} destination${destinations.length !== 1 ? 's' : ''}`}
-          </span>
+          {/* Category chips — vibe + budget surfaced as quick taps */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_CHIPS.map((cat) => {
+              const active =
+                (cat.vibe ? filters.vibe === cat.vibe : !filters.vibe) &&
+                (cat.budget ? filters.budget === cat.budget : !filters.budget) &&
+                (cat.key === 'all' ? !filters.vibe && !filters.budget : true);
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      vibe: cat.vibe || '',
+                      budget: cat.budget || '',
+                    }));
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition ${
+                    active
+                      ? 'bg-forest-600 text-white border-forest-600 shadow-soft'
+                      : 'bg-white text-ink-700 border-cream-300 hover:border-forest-300 hover:text-forest-700'
+                  }`}
+                >
+                  <span>{cat.icon}</span>
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
+
+      {/* Trending this week — AI-generated, server-cached for 7 days */}
+      {(trendingLoading || trending.length > 0) && (
+        <section className="w-full px-4 sm:px-8 lg:px-12 pt-8 pb-2">
+          <div className="flex items-end justify-between mb-4 gap-2 flex-wrap">
+            <div>
+              <p className="text-xs font-semibold tracking-wider uppercase text-coral-600 mb-1">🔥 Trending this week</p>
+              <h2 className="font-display text-2xl font-bold text-ink-900">Fresh picks our AI is loving right now</h2>
+            </div>
+            <p className="text-xs text-ink-500">Updates weekly</p>
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto scrollbar-thin pb-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {trendingLoading
+              ? [...Array(4)].map((_, i) => (
+                  <div key={i} className="shrink-0 w-72 bg-white rounded-2xl shadow-soft overflow-hidden animate-pulse">
+                    <div className="h-40 bg-cream-200" />
+                    <div className="p-4 space-y-2">
+                      <div className="h-4 bg-cream-200 rounded w-2/3" />
+                      <div className="h-3 bg-cream-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))
+              : trending.map((dest) => (
+                  <button
+                    key={dest.id}
+                    onClick={() => handleQuickPick(dest)}
+                    className="shrink-0 w-72 text-left bg-white rounded-2xl shadow-soft hover:shadow-hover transition overflow-hidden flex flex-col group"
+                  >
+                    <div className="relative h-40 overflow-hidden">
+                      <SmartImage
+                        query={dest.imageQuery || `${dest.name} ${dest.country}`}
+                        alt={dest.name}
+                        size={600}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-wider bg-coral-500 text-white px-2 py-0.5 rounded-full">Trending</span>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-display font-bold text-ink-900">{dest.name}</h3>
+                      {dest.country && dest.name?.toLowerCase() !== dest.country.toLowerCase() && (
+                        <p className="text-xs text-ink-500">{dest.country}</p>
+                      )}
+                      <p className="text-xs text-ink-600 mt-2 line-clamp-2 leading-relaxed">{dest.description}</p>
+                    </div>
+                  </button>
+                ))}
+          </div>
+        </section>
+      )}
 
       {/* Destinations grid */}
       <section className="w-full px-4 sm:px-8 lg:px-12 py-10">
@@ -282,7 +379,9 @@ export default function ExplorePage() {
                     <div className="flex items-start justify-between mb-2 gap-2">
                       <div>
                         <h3 className="font-display text-lg font-bold text-ink-900">{dest.name}</h3>
-                        <p className="text-xs text-ink-500">{dest.country} · {dest.continent}</p>
+                        {dest.country && dest.name?.toLowerCase() !== dest.country.toLowerCase() && (
+                          <p className="text-xs text-ink-500">{dest.country}</p>
+                        )}
                       </div>
                     </div>
 

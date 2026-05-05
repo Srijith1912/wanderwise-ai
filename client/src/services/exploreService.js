@@ -13,3 +13,8 @@ export const getDestinations = async (filters = {}) => {
   const res = await axios.get(`${BASE}?${params.toString()}`);
   return res.data.destinations;
 };
+
+export const getTrending = async () => {
+  const res = await axios.get(`${BASE}/trending`);
+  return res.data; // { destinations, generatedAt, cached, stale? }
+};

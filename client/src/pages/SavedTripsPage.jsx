@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrips, deleteTripById } from '../services/tripService';
 import Layout from '../components/Layout';
+import SmartImage from '../components/SmartImage';
 
 const BUDGET_BADGE = {
   budget: 'bg-forest-50 text-forest-700 border-forest-100',
@@ -93,43 +94,60 @@ export default function SavedTripsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {trips.map((trip) => (
-                <div key={trip._id} className="card p-6 flex flex-col hover:shadow-hover transition">
-                  <h2 className="font-display text-lg font-bold text-ink-900 mb-1">
-                    {trip.title || trip.destination}
-                  </h2>
-                  <p className="text-ink-500 text-sm mb-4">{trip.destination}</p>
+                <div key={trip._id} className="card overflow-hidden flex flex-col hover:shadow-hover transition">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/trips/${trip._id}`)}
+                    className="relative h-40 overflow-hidden block group"
+                  >
+                    <SmartImage
+                      query={trip.destination}
+                      alt={trip.destination}
+                      size={600}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-900/55 to-transparent" />
+                    <div className="absolute bottom-2 left-3 right-3 text-white">
+                      <p className="text-[11px] uppercase tracking-wider opacity-80">Itinerary</p>
+                      <p className="font-display font-bold text-base truncate">{trip.title || trip.destination}</p>
+                    </div>
+                  </button>
 
-                  <div className="flex flex-wrap gap-1.5 mb-4 text-xs">
-                    <span className="bg-forest-50 text-forest-700 border border-forest-100 px-2.5 py-1 rounded-full">
-                      {trip.duration} days
-                    </span>
-                    <span className={`border px-2.5 py-1 rounded-full ${BUDGET_BADGE[trip.budget] || 'bg-cream-100 border-cream-200 text-ink-700'}`}>
-                      {trip.budget}
-                    </span>
-                    <span className="bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2.5 py-1 rounded-full">
-                      {trip.travelStyle}
-                    </span>
-                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-ink-500 text-sm mb-3">{trip.destination}</p>
 
-                  <p className="text-ink-400 text-xs mb-5">
-                    Saved {new Date(trip.createdAt).toLocaleDateString()}
-                  </p>
+                    <div className="flex flex-wrap gap-1.5 mb-4 text-xs">
+                      <span className="bg-forest-50 text-forest-700 border border-forest-100 px-2.5 py-1 rounded-full">
+                        {trip.duration} days
+                      </span>
+                      <span className={`border px-2.5 py-1 rounded-full ${BUDGET_BADGE[trip.budget] || 'bg-cream-100 border-cream-200 text-ink-700'}`}>
+                        {trip.budget}
+                      </span>
+                      <span className="bg-terracotta-50 text-terracotta-700 border border-terracotta-100 px-2.5 py-1 rounded-full">
+                        {trip.travelStyle}
+                      </span>
+                    </div>
 
-                  <div className="mt-auto flex gap-2">
-                    <button
-                      onClick={() => navigate(`/trips/${trip._id}`)}
-                      className="flex-1 btn-primary py-2 text-sm"
-                    >
-                      View itinerary
-                    </button>
-                    <button
-                      onClick={() => handleDelete(trip._id)}
-                      disabled={deletingId === trip._id}
-                      className="btn-ghost text-coral-600 hover:bg-coral-50 px-3 py-2 text-sm"
-                      title="Delete trip"
-                    >
-                      {deletingId === trip._id ? '…' : '🗑'}
-                    </button>
+                    <p className="text-ink-400 text-xs mb-5">
+                      Saved {new Date(trip.createdAt).toLocaleDateString()}
+                    </p>
+
+                    <div className="mt-auto flex gap-2">
+                      <button
+                        onClick={() => navigate(`/trips/${trip._id}`)}
+                        className="flex-1 btn-primary py-2 text-sm"
+                      >
+                        View itinerary
+                      </button>
+                      <button
+                        onClick={() => handleDelete(trip._id)}
+                        disabled={deletingId === trip._id}
+                        className="btn-ghost text-coral-600 hover:bg-coral-50 px-3 py-2 text-sm"
+                        title="Delete trip"
+                      >
+                        {deletingId === trip._id ? '…' : '🗑'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
