@@ -13,7 +13,12 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      // Optional so OAuth users (Google) can exist without a local password.
+      required: false,
+    },
+    googleId: {
+      type: String,
+      default: null,
     },
     bio: {
       type: String,
@@ -31,6 +36,24 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    savedPosts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
   },
   { timestamps: true },
 );

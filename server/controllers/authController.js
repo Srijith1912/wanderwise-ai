@@ -32,6 +32,9 @@ const userResponse = (user) => ({
   profilePicture: user.profilePicture || "",
   homeCountry: user.homeCountry || "",
   travelInterests: user.travelInterests || [],
+  savedPosts: (user.savedPosts || []).map((id) => id.toString()),
+  followingCount: (user.following || []).length,
+  followerCount: (user.followers || []).length,
 });
 
 // REGISTER
@@ -130,6 +133,80 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error during login",
+      error: error.message,
+    });
+  }
+};
+
+// GOOGLE SIGN-IN — verifies the Google ID token, then finds-or-creates the user.
+// The client sends the `credential` (ID token) from Google Identity Services.
+// We verify it against Google's tokeninfo endpoint (checks signature + expiry)
+// and confirm the audience matches our own OAuth client id.
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing Google credential" });
+    }
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res
+        .status(503)
+        .json({ success: false, message: "Google sign-in is not configured" });
+    }
+
+    const verifyRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+    );
+    if (!verifyRes.ok) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid Google credential" });
+    }
+    const payload = await verifyRes.json();
+
+    // Guard: the token must have been issued for OUR app.
+    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Google credential audience mismatch" });
+    }
+    if (!payload.email) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Google account has no email" });
+    }
+
+    let user = await User.findOne({ email: payload.email });
+    if (!user) {
+      user = await User.create({
+        name: payload.name || payload.email.split("@")[0],
+        email: payload.email,
+        googleId: payload.sub,
+        profilePicture: payload.picture || "",
+      });
+    } else if (!user.googleId) {
+      // Link Google to an existing local account.
+      user.googleId = payload.sub;
+      if (!user.profilePicture && payload.picture) {
+        user.profilePicture = payload.picture;
+      }
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+    return res.status(200).json({
+      success: true,
+      message: "Google sign-in successful",
+      token,
+      user: userResponse(user),
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during Google sign-in",
       error: error.message,
     });
   }

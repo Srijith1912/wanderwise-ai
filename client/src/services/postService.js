@@ -40,3 +40,43 @@ export const likePost = async (postId) => {
   );
   return data;
 };
+
+export const addComment = async (postId, text) => {
+  const { data } = await axios.post(
+    `${BASE}/${postId}/comment`,
+    { text },
+    { headers: getAuthHeader() },
+  );
+  return data.comment;
+};
+
+export const getComments = async (postId) => {
+  const { data } = await axios.get(`${BASE}/${postId}/comments`, {
+    headers: getAuthHeader(),
+  });
+  return data.comments;
+};
+
+export const deleteComment = async (postId, commentId) => {
+  const { data } = await axios.delete(
+    `${BASE}/${postId}/comment/${commentId}`,
+    { headers: getAuthHeader() },
+  );
+  return data;
+};
+
+export const toggleSavePost = async (postId) => {
+  const { data } = await axios.post(
+    `${BASE}/${postId}/save`,
+    {},
+    { headers: getAuthHeader() },
+  );
+  return data;
+};
+
+export const getSavedPosts = async () => {
+  const { data } = await axios.get(`${BASE}/saved/me`, {
+    headers: getAuthHeader(),
+  });
+  return data.posts;
+};

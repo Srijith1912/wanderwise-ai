@@ -39,26 +39,37 @@ Return ONLY a valid JSON object in exactly this format, no extra text, no markdo
   "travelStyle": "string",
   "summary": "2-3 sentence overview of the trip",
   "tips": ["tip1", "tip2", "tip3"],
+  "packingList": [
+    { "category": "Essentials", "items": ["Passport", "Phone charger"] },
+    { "category": "Clothing", "items": ["..."] },
+    { "category": "Weather-specific", "items": ["..."] }
+  ],
   "days": [
     {
       "day": 1,
       "theme": "short theme for the day",
       "activities": [
-        { "time": "Morning", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "2-4 word photo-search phrase for this exact place/landmark, e.g. 'Eiffel Tower'. Be specific and visual." },
-        { "time": "Afternoon", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "..." },
-        { "time": "Evening", "title": "Activity name", "description": "What to do and why it's great", "imageQuery": "..." }
+        { "time": "Morning", "title": "Activity name", "description": "What to do and why it's great", "place": "Statue of Liberty", "imageQuery": "Statue of Liberty" },
+        { "time": "Afternoon", "title": "Activity name", "description": "What to do and why it's great", "place": "", "imageQuery": "..." },
+        { "time": "Evening", "title": "Activity name", "description": "What to do and why it's great", "place": "Times Square", "imageQuery": "Times Square at night" }
       ]
     }
   ]
 }
 
-For imageQuery: pick a recognizable landmark, neighborhood, or visual scene tied to that activity (e.g. "Sensoji Temple", "Shibuya Crossing", "Tsukiji fish market"). Avoid generic words like "restaurant", "lunch", or "museum" alone — combine with the place name when needed.
+CRITICAL — number of days: The "days" array MUST contain EXACTLY ${duration} day objects, numbered "day": 1 through "day": ${duration}. Never return fewer or more days. Each day needs 3-4 activities.
+
+For place: the specific, real-world location that can be pinned on a map (e.g. "Statue of Liberty", "Louvre Museum", "Shibuya Crossing"). Use an EMPTY string "" when the activity is NOT a specific mappable spot (e.g. "lunch at a local café", "free morning to relax", "wander the old town"). Only concrete, named landmarks/venues get a value.
+
+For imageQuery: a 2-4 word photo-search phrase for a beautiful, recognizable view of that place (e.g. "Sensoji Temple", "Shibuya Crossing at night", "Amalfi Coast view"). Prefer scenic landmark/skyline/nature phrasing. Avoid generic words like "restaurant" or "lunch" alone.
+
+For packingList: 3-5 categories tailored to the destination, season, and planned activities. Keep items short. Always include this field.
 `;
 
     const response = await openai.chat.completions.create({
       model: SMART_MODEL,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
+      temperature: 0.45,
       response_format: { type: "json_object" },
     });
 
@@ -155,7 +166,7 @@ Reply ONLY in JSON like this:
 
 CRITICAL RULES on updatedItinerary:
 - WHENEVER the user asks for ANY change to the itinerary — add an activity, remove one, swap days, change pace, replace a meal, add a stop, change theme, "more X", "less Y", "make day N about Z", "add some hidden gems", reorder, retheme, etc. — you MUST return the COMPLETE updated itinerary in "updatedItinerary".
-- The returned itinerary must keep the SAME structure: { destination, duration, budget, travelStyle, summary, tips, days: [{day, theme, activities: [{time, title, description}]}] }. Include EVERY field, even ones you didn't change. Do not omit days or activities.
+- The returned itinerary must keep the SAME structure: { destination, duration, budget, travelStyle, summary, tips, packingList: [{category, items}], days: [{day, theme, activities: [{time, title, description, place, imageQuery}]}] }. Include EVERY field, even ones you didn't change (keep packingList and each activity's place/imageQuery). Do not omit days or activities, and keep the same number of days unless the user explicitly asks to change trip length.
 - Set "updatedItinerary" to null ONLY when the user is asking a question or chatting (e.g. "what's the best time to visit?", "tell me about the food").
 - If the user wants to switch the trip to a different city entirely, also fill "suggestedDestination" with the canonical "City, Country".
 
@@ -190,9 +201,9 @@ imageQueries: 0-3 short, photo-search-friendly phrases for places mentioned (e.g
     const response = await openai.chat.completions.create({
       model: SMART_MODEL,
       messages,
-      temperature: 0.7,
+      temperature: 0.4,
       response_format: { type: "json_object" },
-      max_tokens: 2500,
+      max_tokens: 3000,
     });
 
     const parsed = JSON.parse(response.choices[0].message.content);
@@ -229,6 +240,8 @@ const saveTrip = async (req, res) => {
       duration,
       interests,
       travelStyle,
+      startDate,
+      endDate,
       generatedItinerary,
     } = req.body;
 
@@ -240,6 +253,8 @@ const saveTrip = async (req, res) => {
       duration,
       interests: interests || [],
       travelStyle: travelStyle || "balanced",
+      startDate: startDate || null,
+      endDate: endDate || null,
       generatedItinerary,
     });
 

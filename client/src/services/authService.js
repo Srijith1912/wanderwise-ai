@@ -29,6 +29,11 @@ export const login = async (email, password) => {
   return { token: response.data.token, user: response.data.user };
 };
 
+export const googleAuth = async (credential) => {
+  const response = await API.post("/auth/google", { credential });
+  return { token: response.data.token, user: response.data.user };
+};
+
 export const getCurrentUser = async (token) => {
   const response = await API.get("/auth/me", {
     headers: { Authorization: `Bearer ${token}` },

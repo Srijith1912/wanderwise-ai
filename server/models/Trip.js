@@ -31,6 +31,14 @@ const tripSchema = new mongoose.Schema(
       type: String,
       default: "balanced",
     },
+    startDate: {
+      type: Date,
+      default: null,
+    },
+    endDate: {
+      type: Date,
+      default: null,
+    },
     generatedItinerary: {
       type: mongoose.Schema.Types.Mixed,
       default: null,

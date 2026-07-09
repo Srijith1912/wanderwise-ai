@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { createPost, getPosts, likePost } from '../services/postService';
+import { createPost, getPosts, likePost, toggleSavePost } from '../services/postService';
+import { getFollowingFeed } from '../services/userService';
 import { getDestinations } from '../services/exploreService';
 import Layout from '../components/Layout';
 import Avatar from '../components/Avatar';
+import PostCard from '../components/PostCard';
+import ImageUpload from '../components/ImageUpload';
 
 const isProbablyImageUrl = (url) =>
   /^https?:\/\//i.test(url) &&
@@ -14,25 +17,10 @@ const isProbablyImageUrl = (url) =>
 const IMAGE_URL_HINT =
   "That doesn't look like a direct image link. Make sure the URL ends in .jpg, .png, .gif, or .webp — on imgbb, right-click the image and pick 'Copy image address'.";
 
-const formatPostTime = (dateStr) => {
-  const date = new Date(dateStr);
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const formatCount = (n) => {
-  if (n < 1000) return String(n);
-  if (n < 10000) return `${(n / 1000).toFixed(1)}k`;
-  return `${Math.round(n / 1000)}k`;
-};
-
 const FILTER_TABS = [
   { id: 'latest', label: 'Latest', icon: '✨' },
   { id: 'trending', label: 'Trending', icon: '🔥' },
-  { id: 'following', label: 'Following', icon: '👥', disabled: true, soon: true },
+  { id: 'following', label: 'Following', icon: '👥' },
 ];
 
 const TRAVEL_TIPS = [
@@ -46,8 +34,13 @@ const TRAVEL_TIPS = [
 export default function FeedPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [highlightId, setHighlightId] = useState(null);
 
   const [posts, setPosts] = useState([]);
+  const [followingPosts, setFollowingPosts] = useState([]);
+  const [followingLoaded, setFollowingLoaded] = useState(false);
+  const [savedIds, setSavedIds] = useState(() => new Set(user?.savedPosts || []));
   const [trendingDests, setTrendingDests] = useState([]);
   const [composerExpanded, setComposerExpanded] = useState(false);
   const [caption, setCaption] = useState('');
@@ -58,8 +51,6 @@ export default function FeedPage() {
   const [error, setError] = useState('');
   const [postError, setPostError] = useState('');
   const [tab, setTab] = useState('latest');
-  const [popping, setPopping] = useState(null);
-  const [sharedPostId, setSharedPostId] = useState(null);
 
   const dailyTip = useMemo(() => TRAVEL_TIPS[Math.floor(Date.now() / 86400000) % TRAVEL_TIPS.length], []);
 
@@ -67,6 +58,16 @@ export default function FeedPage() {
     fetchPosts();
     getDestinations().then((d) => setTrendingDests((d || []).slice(0, 5))).catch(() => {});
   }, []);
+
+  // Lazy-load the following feed the first time that tab is opened.
+  useEffect(() => {
+    if (tab === 'following' && !followingLoaded) {
+      getFollowingFeed()
+        .then((p) => setFollowingPosts(p || []))
+        .catch(() => setFollowingPosts([]))
+        .finally(() => setFollowingLoaded(true));
+    }
+  }, [tab, followingLoaded]);
 
   const fetchPosts = async () => {
     try {
@@ -80,12 +81,38 @@ export default function FeedPage() {
     }
   };
 
-  const sortedPosts = useMemo(() => {
+  // When arriving via a shared link (/feed#<postId>), jump to that post and flash it.
+  useEffect(() => {
+    if (loadingFeed) return;
+    const id = location.hash?.replace('#', '');
+    if (!id) return;
+    // Shared posts live in the "Latest" list.
+    if (tab !== 'latest') setTab('latest');
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightId(id);
+    const t = setTimeout(() => setHighlightId(null), 2600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingFeed, posts, location.hash]);
+
+  const visiblePosts = useMemo(() => {
     if (tab === 'trending') {
-      return [...posts].sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+      // Recency-weighted engagement: likes + comments, decayed by post age so
+      // fresh popular posts outrank stale all-time winners (HN-style gravity).
+      const score = (p) => {
+        const ageHours = (Date.now() - new Date(p.createdAt).getTime()) / 3.6e6;
+        const engagement = (p.likes?.length || 0) + (p.comments?.length || 0) * 1.5 + 1;
+        return engagement / Math.pow(ageHours + 2, 0.6);
+      };
+      return [...posts].sort((a, b) => score(b) - score(a));
+    }
+    if (tab === 'following') {
+      return followingPosts;
     }
     return posts;
-  }, [posts, tab]);
+  }, [posts, followingPosts, tab]);
 
   const handleCreatePost = async () => {
     if (!caption.trim()) {
@@ -112,25 +139,46 @@ export default function FeedPage() {
     }
   };
 
+  // Optimistic like — toggles the given post in whichever list it lives in.
+  const applyLike = (list, postId) =>
+    list.map((post) => {
+      if (post._id !== postId) return post;
+      const alreadyLiked = post.likes.some((id) => id && id.toString() === user.id);
+      return {
+        ...post,
+        likes: alreadyLiked
+          ? post.likes.filter((id) => id && id.toString() !== user.id)
+          : [...post.likes, user.id],
+      };
+    });
+
   const handleLike = async (postId) => {
-    setPopping(postId);
-    setTimeout(() => setPopping(null), 350);
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post._id !== postId) return post;
-        const alreadyLiked = post.likes.some((id) => id && id.toString() === user.id);
-        return {
-          ...post,
-          likes: alreadyLiked
-            ? post.likes.filter((id) => id && id.toString() !== user.id)
-            : [...post.likes, user.id],
-        };
-      }),
-    );
+    setPosts((prev) => applyLike(prev, postId));
+    setFollowingPosts((prev) => applyLike(prev, postId));
     try {
       await likePost(postId);
     } catch (err) {
       fetchPosts();
+    }
+  };
+
+  const handleToggleSave = async (postId) => {
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+    try {
+      await toggleSavePost(postId);
+    } catch {
+      // Revert on failure
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(postId)) next.delete(postId);
+        else next.add(postId);
+        return next;
+      });
     }
   };
 
@@ -220,20 +268,15 @@ export default function FeedPage() {
               {FILTER_TABS.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => !t.disabled && setTab(t.id)}
-                  disabled={t.disabled}
+                  onClick={() => setTab(t.id)}
                   className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap ${
-                    tab === t.id && !t.disabled
+                    tab === t.id
                       ? 'bg-forest-600 text-white shadow-soft'
-                      : t.disabled
-                      ? 'text-ink-400 cursor-not-allowed'
                       : 'text-ink-700 hover:bg-cream-100'
                   }`}
-                  title={t.disabled ? 'Coming soon' : ''}
                 >
                   <span>{t.icon}</span>
                   {t.label}
-                  {t.soon && <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-cream-200 text-ink-500">soon</span>}
                 </button>
               ))}
             </div>
@@ -262,23 +305,7 @@ export default function FeedPage() {
                         className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-forest-500"
                       />
 
-                      <input
-                        type="url"
-                        placeholder="🖼  Paste an image URL (Unsplash, Imgur, etc.)"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-forest-500"
-                      />
-                      {imageUrl && (
-                        <div className="rounded-xl overflow-hidden border border-cream-300 bg-cream-100">
-                          <img
-                            src={imageUrl}
-                            alt="preview"
-                            className="w-full max-h-72 object-cover"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
+                      <ImageUpload value={imageUrl} onChange={setImageUrl} />
 
                       {postError && <p className="text-coral-600 text-sm">{postError}</p>}
 
@@ -334,136 +361,39 @@ export default function FeedPage() {
               <div className="card p-8 text-center">
                 <p className="text-coral-600 text-sm">{error}</p>
               </div>
-            ) : posts.length === 0 ? (
+            ) : tab === 'following' && !followingLoaded ? (
+              <p className="text-ink-500 text-sm">Loading posts from people you follow…</p>
+            ) : visiblePosts.length === 0 ? (
               <div className="card p-12 text-center">
-                <p className="text-5xl mb-3">✈️</p>
-                <h3 className="font-display text-xl font-bold text-ink-900 mb-1">It's quiet here.</h3>
-                <p className="text-ink-500 text-sm mb-4">Be the first to share a travel moment.</p>
-                <button onClick={() => setComposerExpanded(true)} className="btn-primary px-5 py-2 text-sm">
-                  Write a post
+                <p className="text-5xl mb-3">{tab === 'following' ? '👥' : '✈️'}</p>
+                <h3 className="font-display text-xl font-bold text-ink-900 mb-1">
+                  {tab === 'following' ? 'Nothing here yet.' : "It's quiet here."}
+                </h3>
+                <p className="text-ink-500 text-sm mb-4">
+                  {tab === 'following'
+                    ? 'Follow other travelers to see their posts here.'
+                    : 'Be the first to share a travel moment.'}
+                </p>
+                <button
+                  onClick={() => (tab === 'following' ? setTab('latest') : setComposerExpanded(true))}
+                  className="btn-primary px-5 py-2 text-sm"
+                >
+                  {tab === 'following' ? 'Browse latest posts' : 'Write a post'}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                {sortedPosts.map((post) => {
-                  const isLiked = post.likes.some((id) => id && id.toString() === user.id);
-                  const isOwner = user && post.userId._id.toString() === user.id;
-                  const popping_ = popping === post._id;
-                  return (
-                    <article key={post._id} className="card overflow-hidden hover:shadow-hover transition">
-
-                      {/* Author row */}
-                      <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
-                        <button
-                          onClick={() => navigate(`/profile/${post.userId._id}`)}
-                          className="flex items-center gap-3 group min-w-0"
-                        >
-                          <Avatar name={post.userId?.name} src={post.userId?.profilePicture} size="sm" />
-                          <div className="text-left min-w-0">
-                            <p className="font-semibold text-ink-900 text-sm group-hover:text-forest-700 transition truncate">
-                              {isOwner ? 'You' : post.userId?.name}
-                            </p>
-                            <p className="text-xs text-ink-500">{formatPostTime(post.createdAt)}</p>
-                          </div>
-                        </button>
-                        {post.destinationTag && (
-                          <button
-                            onClick={() => navigate(`/?tag=${encodeURIComponent(post.destinationTag)}`)}
-                            className="text-xs font-medium text-forest-700 bg-forest-50 hover:bg-forest-100 border border-forest-100 px-2.5 py-1 rounded-full transition shrink-0"
-                          >
-                            📍 {post.destinationTag}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Caption */}
-                      {post.caption && (
-                        <p className="px-5 pb-3 text-ink-800 text-[15px] leading-relaxed whitespace-pre-wrap">
-                          {post.caption}
-                        </p>
-                      )}
-
-                      {/* Image */}
-                      {post.imageUrl && (
-                        <div className="bg-cream-100 border-y border-cream-200 relative group">
-                          <img
-                            src={post.imageUrl}
-                            alt=""
-                            className="w-full max-h-[520px] object-cover"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Action bar */}
-                      <div className="px-5 py-3 flex items-center gap-1">
-                        <button
-                          onClick={() => handleLike(post._id)}
-                          className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition ${
-                            isLiked ? 'text-coral-600' : 'text-ink-600 hover:text-coral-500 hover:bg-coral-50'
-                          }`}
-                        >
-                          <span className={`relative inline-block ${popping_ ? 'animate-[pulse_0.35s_ease-out]' : ''}`}>
-                            <svg
-                              viewBox="0 0 24 24"
-                              className={`w-5 h-5 transition-transform ${popping_ ? 'scale-125' : 'scale-100'}`}
-                              fill={isLiked ? 'currentColor' : 'none'}
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                          </span>
-                          <span className="text-sm font-medium">{formatCount(post.likes.length)}</span>
-                        </button>
-
-                        <button
-                          disabled
-                          title="Comments coming soon"
-                          className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-ink-400 cursor-not-allowed"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                          </svg>
-                          <span className="text-sm">Comment</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            const url = window.location.origin + `/feed#${post._id}`;
-                            navigator.clipboard?.writeText(url).then(() => {
-                              setSharedPostId(post._id);
-                              setTimeout(() => setSharedPostId((id) => (id === post._id ? null : id)), 2000);
-                            });
-                          }}
-                          title="Copy link"
-                          className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-ink-600 hover:text-forest-700 hover:bg-forest-50 transition"
-                        >
-                          {sharedPostId === post._id ? (
-                            <>
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 text-forest-700" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                              <span className="text-sm text-forest-700 font-medium">Link copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                              </svg>
-                              <span className="text-sm">Share</span>
-                            </>
-                          )}
-                        </button>
-
-                        <span className="ml-auto text-xs text-ink-400">
-                          {post.likes.length === 1 ? '1 like' : `${formatCount(post.likes.length)} likes`}
-                        </span>
-                      </div>
-                    </article>
-                  );
-                })}
+                {visiblePosts.map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    user={user}
+                    onLike={handleLike}
+                    saved={savedIds.has(post._id)}
+                    onToggleSave={handleToggleSave}
+                    highlight={highlightId === post._id}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -507,18 +437,14 @@ export default function FeedPage() {
             </div>
 
             <div className="card p-5">
-              <p className="text-xs uppercase tracking-wider text-ink-400 font-semibold mb-3">Coming soon</p>
-              <ul className="space-y-2 text-sm text-ink-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-forest-700">•</span> Comments on posts
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-forest-700">•</span> Follow other travelers
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-forest-700">•</span> Save posts for later
-                </li>
-              </ul>
+              <p className="text-xs uppercase tracking-wider text-ink-400 font-semibold mb-2">Saved posts</p>
+              <p className="text-sm text-ink-600 mb-3">Bookmark posts with the 🔖 icon to find them later.</p>
+              <button
+                onClick={() => navigate(`/profile/${user.id}?tab=saved`)}
+                className="w-full text-sm font-medium text-forest-700 hover:text-forest-800 text-left"
+              >
+                View saved posts →
+              </button>
             </div>
           </aside>
         </div>

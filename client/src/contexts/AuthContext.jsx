@@ -48,6 +48,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const { token: newToken, user: userData } = await authService.googleAuth(credential);
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setUser(userData);
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Google sign-in failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (name, email, password) => {
     try {
       setIsLoading(true);
@@ -91,6 +109,7 @@ export const AuthProvider = ({ children }) => {
     isLoadingAuth,
     error,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateProfile,

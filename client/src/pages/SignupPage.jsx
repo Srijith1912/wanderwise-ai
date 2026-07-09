@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { evaluatePassword, passwordIsValid } from '../utils/passwordRules';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
@@ -202,6 +203,8 @@ export default function SignupPage() {
               {isLoading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
+
+          <GoogleSignInButton nextPath={next} onError={setValidationError} />
 
           <p className="mt-6 text-center text-ink-600 text-sm">
             Already have an account?{' '}

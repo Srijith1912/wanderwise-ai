@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -130,6 +131,8 @@ export default function LoginPage() {
               {isLoading ? 'Logging in…' : 'Log in'}
             </button>
           </form>
+
+          <GoogleSignInButton nextPath={next} onError={setLocalError} />
 
           <p className="mt-6 text-center text-ink-600 text-sm">
             Don't have an account?{' '}

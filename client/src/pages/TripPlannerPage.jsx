@@ -9,7 +9,16 @@ import Layout from "../components/Layout";
 import PlannerChat from "../components/PlannerChat";
 import DestinationInput from "../components/DestinationInput";
 import SmartImage from "../components/SmartImage";
+import PackingList from "../components/PackingList";
 import { isRealDestination } from "../utils/geocode";
+
+// endDate = startDate + (duration - 1) days
+const computeEndDate = (startDate, duration) => {
+  if (!startDate) return null;
+  const d = new Date(startDate);
+  d.setDate(d.getDate() + (Number(duration) || 1) - 1);
+  return d.toISOString().slice(0, 10);
+};
 
 const INTERESTS = ["Food", "Culture", "Nature", "Adventure", "History", "Shopping", "Nightlife", "Art"];
 
@@ -36,6 +45,7 @@ export default function TripPlannerPage() {
     duration: 3,
     interests: [],
     travelStyle: "balanced",
+    startDate: "",
   });
 
   const [itinerary, setItinerary] = useState(null);
@@ -233,6 +243,8 @@ export default function TripPlannerPage() {
         duration: formData.duration,
         interests: formData.interests,
         travelStyle: formData.travelStyle,
+        startDate: formData.startDate || null,
+        endDate: computeEndDate(formData.startDate, formData.duration),
         generatedItinerary: itinerary,
       });
       setSavedMessage("Trip saved to your collection.");
@@ -283,8 +295,8 @@ export default function TripPlannerPage() {
       <section className="bg-cream-100 border-b border-cream-300">
         <div className="w-full px-4 sm:px-8 lg:px-12 py-5">
           <div className="max-w-7xl mx-auto space-y-3">
-            {/* Row 1: destination, days, style, generate */}
-            <div className="grid grid-cols-1 sm:grid-cols-[2fr_0.6fr_1fr_auto] gap-3 items-end">
+            {/* Row 1: destination, days, start date, style, generate */}
+            <div className="grid grid-cols-1 sm:grid-cols-[1.8fr_0.6fr_1fr_1fr_auto] gap-3 items-end">
               <div className="relative">
                 <label className="block text-[11px] font-semibold uppercase tracking-wide text-ink-500 mb-1">Destination</label>
                 <DestinationInput
@@ -305,6 +317,16 @@ export default function TripPlannerPage() {
                   onChange={handleChange}
                   min={1}
                   max={30}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-ink-500 mb-1">Start date <span className="text-ink-300 normal-case">(optional)</span></label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
                   className="input-field"
                 />
               </div>
@@ -525,6 +547,10 @@ export default function TripPlannerPage() {
                   </div>
                 ))}
               </div>
+
+              {itinerary.packingList?.length > 0 && (
+                <PackingList packingList={itinerary.packingList} storageKey="preview" />
+              )}
 
               <div className="flex flex-wrap items-center gap-3">
                 <button onClick={handleSave} disabled={saving} className="btn-accent px-6 py-3">

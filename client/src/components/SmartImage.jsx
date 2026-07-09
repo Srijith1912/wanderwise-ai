@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getWikiPhoto } from "../utils/wikiPhoto";
+import { getPexelsPhoto } from "../utils/photo";
 
 // Curated fallback set — direct images.unsplash.com asset URLs (these still work,
 // unlike the deprecated source.unsplash.com search endpoint).
@@ -34,12 +35,21 @@ export default function SmartImage({
 
   useEffect(() => {
     setCurrent(src || fallback);
-    if (src) return; // direct URL wins; skip the Wikipedia lookup
+    if (src) return; // direct URL wins; skip lookups
     if (!query) return;
     let active = true;
-    getWikiPhoto(query, size).then((url) => {
-      if (active && url) setCurrent(url);
-    });
+    // Prefer Pexels (attractive travel photography); fall back to Wikipedia
+    // (great for landmarks) and finally the curated fallback already set.
+    (async () => {
+      const pexels = await getPexelsPhoto(query, size);
+      if (!active) return;
+      if (pexels) {
+        setCurrent(pexels);
+        return;
+      }
+      const wiki = await getWikiPhoto(query, size);
+      if (active && wiki) setCurrent(wiki);
+    })();
     return () => {
       active = false;
     };
