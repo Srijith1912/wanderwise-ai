@@ -36,6 +36,11 @@ An AI-powered travel planning web app where users generate personalized itinerar
 - **Settings** — Change password and email (both require current-password confirmation).
 - **Public Explore landing** — Browse 20 curated destinations + a weekly AI-cached "Trending this week" strip without an account; sign up only when you want to plan or post.
 
+### Look & feel
+- **Warm editorial design** — Fraunces serif headlines over a pine / golden-ochre / blossom palette on warm paper; magenta accents live where people and passions are (likes, destination tags, interests).
+- **Dark & light themes** — sun/moon toggle in the navbar; preference persists and defaults to your system setting, with no flash on load.
+- **A voice, not a template** — headlines and prompts rotate from a pool of editorial lines, so the site never greets you the same way twice. Feed cards rise in with staggered motion; likes burst pink.
+
 > **Optional integrations degrade gracefully:** without their keys, image upload falls back to URL-paste, the weather card and Google button hide, and photos fall back to Wikipedia/curated images — the app still runs.
 
 ---
@@ -44,8 +49,8 @@ An AI-powered travel planning web app where users generate personalized itinerar
 
 **Frontend**
 - React + Vite
-- Tailwind CSS (custom palette: cream / forest / terracotta / coral / ink)
-- Plus Jakarta Sans (display) + Inter (body) via Google Fonts
+- Tailwind CSS with a CSS-variable design system — warm paper / deep pine / golden ochre / blossom magenta / espresso ink, with role-tuned **light & dark themes** behind a single `.dark` class
+- Fraunces (serif display) + Inter (body) via Google Fonts
 - React Router v6, Axios
 - react-map-gl v7 + Mapbox GL JS
 - Google Identity Services (Sign in with Google)
@@ -226,6 +231,13 @@ wanderwise-ai/
 ---
 
 ## Roadmap
+
+### Recently shipped (Jul 13, 2026)
+- ✅ Visual identity v2 — Fraunces serif + pine/ochre/blossom palette, italic-serif logotype
+- ✅ Dark/light theme toggle (persisted, system-default, token-level theming)
+- ✅ Rotating editorial copy (hero, feed, composer prompts)
+- ✅ Profile header redesign (large avatar beside identity, cover removed)
+- ✅ Fixed hero titles rendering dark over photos
 
 ### Recently shipped (Jul 8, 2026)
 - ✅ Comments, follows + Following feed, bookmarks (Saved tab)
