@@ -345,9 +345,17 @@ const updateTrip = async (req, res) => {
     if (req.body.title !== undefined) {
       trip.title = req.body.title;
     }
+    if (req.body.generatedItinerary !== undefined) {
+      trip.generatedItinerary = req.body.generatedItinerary;
+      // Keep the trip's duration in sync when days are added/removed.
+      const days = req.body.generatedItinerary?.days;
+      if (Array.isArray(days) && days.length > 0) {
+        trip.duration = days.length;
+      }
+    }
 
     const updatedTrip = await trip.save();
-    res.json(updatedTrip);
+    res.json({ trip: updatedTrip });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

@@ -1,4 +1,4 @@
-# WanderWise AI ✈️
+# Nostosa AI ✈️
 
 An AI-powered travel planning web app where users generate personalized itineraries with a conversational AI assistant, save trips, explore curated destinations on an interactive map, and share travel posts through a social community feed with comments, follows, and bookmarks.
 
@@ -11,6 +11,7 @@ An AI-powered travel planning web app where users generate personalized itinerar
 ### AI trip planning
 - **AI Trip Planner** — Generate day-by-day itineraries (OpenAI `gpt-4o`) from destination, budget, duration, interests, travel style, and an optional start date.
 - **AI Chat Assistant** — Conversational refinement of your itinerary: add food experiences, swap activities, change the pace, or brainstorm a destination before you start. Updates the itinerary in place, with quick-reply chips.
+- **Editable saved trips** — Every saved itinerary is fully editable: hand-edit the summary, day themes, and each activity (time, title, description, mappable place); add/remove/reorder activities and whole days; edit tips — or hit **Refine with AI** to have the assistant reshape the trip, then review and save. It's genuinely your itinerary.
 - **Real-place validation** — Mapbox Geocoding + an AI "Did you mean…" check (parallel) catch fake/typo'd destinations before generation. Debounced destination autocomplete on the planner and hero search.
 - **AI packing list** — Each itinerary comes with a categorized packing checklist you can tick off, **remove items from, and add your own to** (saved per trip).
 - **Weather forecast** — 5-day forecast for the destination on the trip detail page (OpenWeather).
@@ -22,9 +23,9 @@ An AI-powered travel planning web app where users generate personalized itinerar
 - **Cards ↔ Timeline** — Toggle the day-by-day plan between a card stack and a vertical timeline.
 
 ### Social
-- **Community Feed** — Three-column layout with **Latest / Trending / Following** tabs, expand-on-focus composer, animated heart-pop on like, and a trending-destinations + travel-tip right rail.
+- **Community Feed** — Sticky three-column layout with **Latest / Trending / Voyagers-you-follow** tabs, expand-on-focus composer, animated pink heart-burst on like, staggered card entrances, and an end-of-feed marker.
 - **Comments** — Inline, collapsible comment threads on every post (delete your own, or any on your own post).
-- **Follow / unfollow** — Follower & following counts with list modals; a **Following** feed of posts from people you follow.
+- **Voyagers (follow / unfollow)** — Own vocabulary instead of the usual "followers/following": your **Voyagers** follow you, and **Voyagers you follow** power a dedicated feed tab. Counts open list modals.
 - **Bookmarks** — Save any post and revisit it from the **Saved** tab on your profile.
 - **Recency-weighted Trending** — Ranks by likes + comments decayed by post age, so fresh popular posts surface.
 - **Shareable posts** — The Share button copies a link that opens the feed and scrolls to (and highlights) that exact post.
@@ -35,11 +36,12 @@ An AI-powered travel planning web app where users generate personalized itinerar
 - **Unified Profile** — Account hub with bio, location, travel-interest chips, profile picture, posts, saved trips, bookmarks, follow stats, and quick actions.
 - **Settings** — Change password and email (both require current-password confirmation).
 - **Public Explore landing** — Browse 20 curated destinations + a weekly AI-cached "Trending this week" strip without an account; sign up only when you want to plan or post.
+- **Contact page** — A form (name/email/message) wired to Formspree, with an email fallback.
 
 ### Look & feel
 - **Warm editorial design** — Fraunces serif headlines over a pine / golden-ochre / blossom palette on warm paper; magenta accents live where people and passions are (likes, destination tags, interests).
 - **Dark & light themes** — sun/moon toggle in the navbar; preference persists and defaults to your system setting, with no flash on load.
-- **A voice, not a template** — headlines and prompts rotate from a pool of editorial lines, so the site never greets you the same way twice. Feed cards rise in with staggered motion; likes burst pink.
+- **A voice, not a template** — headlines and prompts rotate from a pool of ~10 editorial lines each, and landing/login/signup pull a random scenic hero photo from a 24-image gallery — so the site never greets you the same way twice. Feed cards rise in with staggered motion; likes burst pink.
 
 > **Optional integrations degrade gracefully:** without their keys, image upload falls back to URL-paste, the weather card and Google button hide, and photos fall back to Wikipedia/curated images — the app still runs.
 
@@ -151,7 +153,8 @@ wanderwise-ai/
 │   │   │   ├── DestinationInput.jsx     # Debounced Mapbox autocomplete
 │   │   │   ├── GoogleSignInButton.jsx   # Sign in with Google (GIS)
 │   │   │   ├── ImageUpload.jsx          # Cloudinary upload + URL-paste fallback
-│   │   │   ├── Layout.jsx / Navbar.jsx
+│   │   │   ├── ItineraryEditor.jsx      # Manual day/activity/tip editor
+│   │   │   ├── Layout.jsx / Navbar.jsx  # Navbar has the dark/light toggle
 │   │   │   ├── MapView.jsx              # Mapbox map, labeled place pins
 │   │   │   ├── PackingList.jsx          # Editable packing checklist
 │   │   │   ├── PlannerChat.jsx          # AI refinement chat popup
@@ -159,7 +162,7 @@ wanderwise-ai/
 │   │   │   ├── SmartImage.jsx           # Pexels → Wikipedia → curated fallback
 │   │   │   └── WeatherStrip.jsx         # 5-day forecast
 │   │   ├── contexts/AuthContext.jsx     # Auth state + useAuth()
-│   │   ├── pages/                       # Explore, Feed, Login, Signup, Settings,
+│   │   ├── pages/                       # Explore, Feed, Login, Signup, Settings, Contact,
 │   │   │                                # TripPlanner, TripDetail, SavedTrips, UserProfile
 │   │   ├── services/                    # auth, explore, post, trip, user, weather
 │   │   └── utils/                       # cloudinary, geocode, passwordRules, photo, wikiPhoto
@@ -199,7 +202,8 @@ wanderwise-ai/
 | POST | `/api/trips/suggest-destination` | "Did you mean…" suggestions | Yes |
 | POST | `/api/trips/save` | Save a trip | Yes |
 | GET | `/api/trips` · `/api/trips/:id` | List / get trips | Yes |
-| PUT · DELETE | `/api/trips/:id` | Rename / delete | Yes |
+| PUT | `/api/trips/:id` | Save edits — title and/or the full edited itinerary | Yes |
+| DELETE | `/api/trips/:id` | Delete a trip | Yes |
 
 ### Posts
 | Method | Endpoint | Description | Auth |
@@ -232,6 +236,11 @@ wanderwise-ai/
 
 ## Roadmap
 
+### Recently shipped (Jul 13, 2026 — later same day)
+- ✅ **Rebrand → Nostosa** (from WanderWise) + **Voyagers** social vocabulary
+- ✅ **Editable saved trips** — full manual itinerary editor + AI refine on saved trips
+- ✅ Quick-wins: dark-mode dropdown fix, circulating hero photos (24-image gallery), sticky feed rails + end marker, Formspree **Contact page**
+
 ### Recently shipped (Jul 13, 2026)
 - ✅ Visual identity v2 — Fraunces serif + pine/ochre/blossom palette, italic-serif logotype
 - ✅ Dark/light theme toggle (persisted, system-default, token-level theming)
@@ -249,12 +258,17 @@ wanderwise-ai/
 - ✅ Recency-weighted Trending; share-to-post scroll
 - ✅ Sign in with Google (OAuth)
 
-### Planned
+### Planned — near-term
+- [ ] Delete / edit / archive posts, like comments
+- [ ] Private (followers-only) profiles + user-set disappearing posts
+- [ ] Location-aware Explore (nearby → in-country → international → trending) + likeable places
+- [ ] Mobile audit → PWA (installable app)
+
+### Planned — later
 - [ ] Group trip planning & shared itineraries
 - [ ] Expense splitting between travelers (Splitwise-style)
 - [ ] Real-time direct messages
-- [ ] Stories / 24-hr ephemeral posts
-- [ ] Live location sharing in groups
+- [ ] Stories / live location sharing in groups
 - [ ] Traveler matching
 
 > Notes: an AI per-trip **cost estimate** and per-day **route lines** were prototyped and then removed — cost figures read as misleadingly precise (real expense-splitting is planned instead), and route lines added map clutter versus clean labeled pins.
