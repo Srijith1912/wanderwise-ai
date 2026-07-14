@@ -5,10 +5,12 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { evaluatePassword, passwordIsValid } from '../utils/passwordRules';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import { pickOne, HERO_PHOTOS, HERO_FALLBACK, heroPhoto } from '../utils/copy';
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
   const next = searchParams.get('next') || '/';
+  const heroImg = useMemo(() => heroPhoto(pickOne(HERO_PHOTOS)), []);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,9 +55,15 @@ export default function SignupPage() {
       {/* Left visual */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=1600&q=80"
+          src={heroImg}
           alt="Travel"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => {
+            if (!e.currentTarget.dataset.fb) {
+              e.currentTarget.dataset.fb = '1';
+              e.currentTarget.src = heroPhoto(HERO_FALLBACK);
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-bl from-terracotta-700/70 via-forest-700/50 to-forest-900/80" />
         <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
@@ -65,7 +73,7 @@ export default function SignupPage() {
                 <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
               </svg>
             </span>
-            <span className="font-display font-bold text-xl">WanderWise</span>
+            <span className="font-display font-bold text-xl">Nostosa</span>
           </Link>
 
           <div>
@@ -95,7 +103,7 @@ export default function SignupPage() {
                   <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
                 </svg>
               </span>
-              <span className="font-display font-bold text-xl text-ink-900">WanderWise</span>
+              <span className="font-display font-bold text-xl text-ink-900">Nostosa</span>
             </Link>
           </div>
 

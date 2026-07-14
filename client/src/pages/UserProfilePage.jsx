@@ -318,11 +318,11 @@ export default function UserProfilePage() {
                   </div>
                   <button onClick={() => openFollowList('followers')} className="text-left hover:opacity-70 transition">
                     <p className="font-display text-2xl font-bold text-ink-900">{profile?.followerCount ?? 0}</p>
-                    <p className="text-xs text-ink-500 uppercase tracking-wider">Followers</p>
+                    <p className="text-xs text-ink-500 uppercase tracking-wider">Voyagers</p>
                   </button>
                   <button onClick={() => openFollowList('following')} className="text-left hover:opacity-70 transition">
                     <p className="font-display text-2xl font-bold text-ink-900">{profile?.followingCount ?? 0}</p>
-                    <p className="text-xs text-ink-500 uppercase tracking-wider">Following</p>
+                    <p className="text-xs text-ink-500 uppercase tracking-wider">Voyagers you follow</p>
                   </button>
                   {isOwnProfile && (
                     <div>
@@ -589,7 +589,7 @@ export default function UserProfilePage() {
 
       {followModal && (
         <FollowListModal
-          title={followModal === 'followers' ? 'Followers' : 'Following'}
+          title={followModal === 'followers' ? 'Voyagers' : 'Voyagers you follow'}
           users={followList}
           loading={followListLoading}
           onClose={() => setFollowModal(null)}

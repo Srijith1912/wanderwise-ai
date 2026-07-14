@@ -10,8 +10,8 @@ const Logo = () => (
         <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
       </svg>
     </span>
-    <span className="font-display text-[1.35rem] text-ink-900 tracking-tight leading-none">
-      <em className="italic font-medium">Wander</em><span className="font-semibold">Wise</span>
+    <span className="font-display italic font-medium text-[1.4rem] text-ink-900 tracking-tight leading-none">
+      Nostosa
     </span>
   </Link>
 );

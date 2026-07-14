@@ -21,7 +21,7 @@ const IMAGE_URL_HINT =
 const FILTER_TABS = [
   { id: 'latest', label: 'Latest', icon: '✨' },
   { id: 'trending', label: 'Trending', icon: '🔥' },
-  { id: 'following', label: 'Following', icon: '👥' },
+  { id: 'following', label: 'Voyagers you follow', icon: '👥' },
 ];
 
 const TRAVEL_TIPS = [
@@ -203,7 +203,7 @@ export default function FeedPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_300px] gap-6">
 
           {/* Left rail — desktop only */}
-          <aside className="hidden lg:block space-y-5">
+          <aside className="hidden lg:block space-y-5 lg:sticky lg:top-20 self-start">
             <div className="card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar name={user?.name} src={user?.profilePicture} size="md" />
@@ -384,7 +384,7 @@ export default function FeedPage() {
                 </h3>
                 <p className="text-ink-500 text-sm mb-4">
                   {tab === 'following'
-                    ? 'Follow other travelers to see their posts here.'
+                    ? 'Follow other voyagers to see their posts here.'
                     : 'Be the first to share a travel moment.'}
                 </p>
                 <button
@@ -412,12 +412,21 @@ export default function FeedPage() {
                     />
                   </div>
                 ))}
+
+                {/* End-of-feed marker */}
+                <div className="flex flex-col items-center gap-1 py-10 text-center">
+                  <span className="text-2xl">🌍</span>
+                  <p className="font-display italic text-ink-700">You've reached the end of the trail.</p>
+                  <p className="text-xs text-ink-400">
+                    That's every post{tab === 'following' ? ' from your voyagers' : ''} for now — go make some new memories.
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
           {/* Right rail — desktop only */}
-          <aside className="hidden lg:block space-y-5">
+          <aside className="hidden lg:block space-y-5 lg:sticky lg:top-20 self-start">
             <div className="card p-5">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs uppercase tracking-wider text-ink-400 font-semibold">Trending destinations</p>

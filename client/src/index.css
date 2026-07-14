@@ -151,10 +151,27 @@
   textarea {
     color: rgb(var(--ink-900));
     background-color: rgb(var(--cream-50));
+    color-scheme: light;
+  }
+
+  /* Native <select> option popups follow the control's own color-scheme, not the
+     page's — so set it explicitly per theme or dropdowns render light in dark mode. */
+  .dark input,
+  .dark select,
+  .dark textarea {
+    color-scheme: dark;
   }
 
   select {
     padding-right: 1.5rem;
+  }
+
+  /* Native <option> popups don't reliably inherit theme colors (a transparent
+     select leaves them white with light text = unreadable in dark mode). Pin
+     them to the theme surface + ink explicitly. */
+  select option {
+    background-color: rgb(var(--cream-50));
+    color: rgb(var(--ink-900));
   }
 
   input::placeholder,

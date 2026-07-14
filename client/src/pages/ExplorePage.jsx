@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
 import DestinationInput from '../components/DestinationInput';
 import SmartImage from '../components/SmartImage';
-import { pickOne, HERO_HEADLINES, HERO_SUBTITLES } from '../utils/copy';
+import { pickOne, HERO_HEADLINES, HERO_SUBTITLES, HERO_PHOTOS, HERO_FALLBACK, heroPhoto } from '../utils/copy';
 
 const formatPlace = (name, country) => {
   if (!country) return name;
@@ -71,6 +71,7 @@ export default function ExplorePage() {
   // Rotating editorial copy — fresh line each page load, stable while mounted.
   const hero = useMemo(() => pickOne(HERO_HEADLINES), []);
   const heroSub = useMemo(() => pickOne(HERO_SUBTITLES), []);
+  const heroImg = useMemo(() => heroPhoto(pickOne(HERO_PHOTOS), 1920), []);
 
   // Hero quick-plan form
   const [heroDestination, setHeroDestination] = useState('');
@@ -140,9 +141,15 @@ export default function ExplorePage() {
       <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80"
+            src={heroImg}
             alt=""
             className="w-full h-full object-cover"
+            onError={(e) => {
+              if (!e.currentTarget.dataset.fb) {
+                e.currentTarget.dataset.fb = '1';
+                e.currentTarget.src = heroPhoto(HERO_FALLBACK, 1920);
+              }
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-night/55 via-night/25 to-night/35" />
         </div>

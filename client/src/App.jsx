@@ -12,6 +12,7 @@ import FeedPage from './pages/FeedPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ExplorePage from './pages/ExplorePage';
 import SettingsPage from './pages/SettingsPage';
+import ContactPage from './pages/ContactPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, isLoadingAuth } = useAuth();
@@ -51,6 +52,7 @@ function App() {
           {/* Public auth */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* Legacy aliases */}
           <Route path="/explore" element={<Navigate to="/" replace />} />

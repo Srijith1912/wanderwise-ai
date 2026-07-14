@@ -67,3 +67,39 @@ export const COMPOSER_PROMPTS = [
 
 export const fillName = (template, name) =>
   template.replaceAll("{name}", name || "traveler");
+
+// ---- Rotating hero photos (landing / login / signup) ----
+// Direct images.unsplash.com asset URLs (the search endpoint is deprecated; these
+// specific assets are stable). A different scenic shot greets you each visit.
+export const HERO_PHOTOS = [
+  "https://images.unsplash.com/photo-1469474968028-56623f02e42e", // mountain road
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470", // mountain lake
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1", // green valley train
+  "https://images.unsplash.com/photo-1502920917128-1aa500764cbd", // sunset palms
+  "https://images.unsplash.com/photo-1488085061387-422e29b40080", // road trip
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba", // starry mountains
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e", // tropical beach
+  "https://images.unsplash.com/photo-1454496522488-7a8e488e8606", // misty peaks
+  "https://images.unsplash.com/photo-1444723121867-7a241cacace9", // city dusk
+  "https://images.unsplash.com/photo-1439066615861-d1af74d74000", // foggy forest
+  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05", // alpine fog
+  "https://images.unsplash.com/photo-1433086966358-54859d0ed716", // waterfall bridge
+  "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5", // golden field
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d", // forest path
+  "https://images.unsplash.com/photo-1426604966848-d7adac402bff", // green valley
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee", // summit sunset
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e", // lake cabin
+  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e", // rolling hills
+  "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e", // terraced green
+  "https://images.unsplash.com/photo-1493246507139-91e8fad9978e", // mirror lake
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34", // paris
+  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963", // amalfi coast
+  "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9", // venice canal
+  "https://images.unsplash.com/photo-1524492412937-b28074a5d7da", // taj mahal
+];
+
+// A known-good shot to fall back to if a chosen photo ever fails to load.
+export const HERO_FALLBACK = "https://images.unsplash.com/photo-1469474968028-56623f02e42e";
+
+// Full URL at a given width (hero wants wider than the auth split-screen).
+export const heroPhoto = (url, width = 1600) => `${url}?w=${width}&q=80&auto=format&fit=crop`;

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Layout({ children, hideNav = false }) {
@@ -8,9 +9,12 @@ export default function Layout({ children, hideNav = false }) {
       <footer className="border-t border-cream-300 bg-cream-100">
         <div className="w-full px-4 sm:px-8 lg:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-ink-500">
           <p>
-            © {new Date().getFullYear()} <span className="font-display italic">WanderWise</span> · made for wanderers.
+            © {new Date().getFullYear()} <span className="font-display italic">Nostosa</span> · made for wanderers.
           </p>
-          <p className="text-ink-400">Built by Srijith Mulupuri</p>
+          <div className="flex items-center gap-4">
+            <Link to="/contact" className="hover:text-forest-700 transition">Contact</Link>
+            <span className="text-ink-400">Built by Srijith Mulupuri</span>
+          </div>
         </div>
       </footer>
     </div>
