@@ -67,11 +67,10 @@ export const getTripById = async (id) => {
   return response.data;
 };
 
-export const updateTrip = async (id, title) => {
-  const response = await axios.put(
-    `${BASE}/${id}`,
-    { title },
-    { headers: getAuthHeader() },
-  );
+// updates: { title?, generatedItinerary? }
+export const updateTrip = async (id, updates) => {
+  const response = await axios.put(`${BASE}/${id}`, updates, {
+    headers: getAuthHeader(),
+  });
   return response.data;
 };

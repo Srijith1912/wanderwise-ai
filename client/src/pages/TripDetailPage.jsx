@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { deleteTripById, getTripById, updateTrip } from '../services/tripService';
 import MapView from '../components/MapView';
@@ -6,6 +6,10 @@ import Layout from '../components/Layout';
 import SmartImage from '../components/SmartImage';
 import PackingList from '../components/PackingList';
 import WeatherStrip from '../components/WeatherStrip';
+import PlannerChat from '../components/PlannerChat';
+import ItineraryEditor from '../components/ItineraryEditor';
+
+const clone = (o) => JSON.parse(JSON.stringify(o));
 
 const formatDate = (d) =>
   new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -42,6 +46,13 @@ export default function TripDetailPage() {
   const [titleInput, setTitleInput] = useState('');
   const [savingTitle, setSavingTitle] = useState(false);
 
+  // Itinerary editing
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+
   useEffect(() => {
     fetchTrip();
   }, [id]);
@@ -63,7 +74,7 @@ export default function TripDetailPage() {
     if (!titleInput.trim()) return;
     setSavingTitle(true);
     try {
-      const updated = await updateTrip(id, titleInput.trim());
+      const updated = await updateTrip(id, { title: titleInput.trim() });
       setTrip(updated.trip || updated);
       setIsEditingTitle(false);
     } catch (err) {
@@ -86,6 +97,53 @@ export default function TripDetailPage() {
   const itinerary = trip?.generatedItinerary;
   const tipsList = itinerary?.travelTips || itinerary?.tips || [];
 
+  const startEdit = () => {
+    setDraft(clone(itinerary || { summary: '', days: [], tips: [] }));
+    setEditMode(true);
+    setSavedFlash('');
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setDraft(null);
+  };
+
+  const saveEdit = async () => {
+    setSaving(true);
+    try {
+      const updated = await updateTrip(id, {
+        title: trip.title,
+        generatedItinerary: draft,
+      });
+      setTrip(updated.trip || updated);
+      setEditMode(false);
+      setDraft(null);
+      setSavedFlash('Itinerary saved.');
+      setTimeout(() => setSavedFlash(''), 2500);
+    } catch (err) {
+      alert('Failed to save the itinerary. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // AI chat updates flow into the draft and drop us into edit mode for review.
+  const applyAiUpdate = (newItinerary) => {
+    setDraft(newItinerary);
+    setEditMode(true);
+  };
+
+  const formContext = useMemo(
+    () => trip && ({
+      destination: trip.destination,
+      duration: trip.duration,
+      budget: trip.budget,
+      travelStyle: trip.travelStyle,
+      interests: trip.interests,
+    }),
+    [trip],
+  );
+
   if (loading) {
     return (
       <Layout>
@@ -105,10 +163,12 @@ export default function TripDetailPage() {
     );
   }
 
+  const chatItinerary = editMode ? draft : itinerary;
+
   return (
     <Layout>
       <section className="w-full px-4 sm:px-8 lg:px-12 py-8">
-        <div className="max-w-5xl mx-auto">
+        <div className={`max-w-5xl mx-auto ${editMode ? 'pb-24' : ''}`}>
           <button
             onClick={() => navigate('/trips')}
             className="text-forest-700 hover:text-forest-800 text-sm mb-5 inline-flex items-center gap-1 font-medium"
@@ -176,7 +236,7 @@ export default function TripDetailPage() {
                 ))}
               </div>
 
-              {itinerary?.summary && (
+              {!editMode && itinerary?.summary && (
                 <p className="text-white/90 leading-relaxed max-w-3xl">{itinerary.summary}</p>
               )}
 
@@ -188,13 +248,13 @@ export default function TripDetailPage() {
             </div>
           </div>
 
-          {/* Weather */}
+          {/* Weather (city-based, unchanged by edits) */}
           <div className="mb-6">
             <WeatherStrip city={trip.destination} />
           </div>
 
-          {/* Map */}
-          {itinerary?.days?.length > 0 && (
+          {/* Map — hidden while editing (reflects saved data) */}
+          {!editMode && itinerary?.days?.length > 0 && (
             <div className="mb-6">
               <h2 className="font-display text-xl font-bold text-ink-900 mb-3">Trip map</h2>
               <div className="card overflow-hidden">
@@ -203,29 +263,55 @@ export default function TripDetailPage() {
             </div>
           )}
 
-          {/* View toggle */}
-          {itinerary?.days?.length > 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-xl font-bold text-ink-900">Day-by-day</h2>
-              <div className="bg-white border border-cream-300 rounded-xl p-1 flex gap-1">
-                <button
-                  onClick={() => setView('cards')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === 'cards' ? 'bg-forest-600 text-white' : 'text-ink-600 hover:bg-cream-100'}`}
-                >
-                  ▤ Cards
-                </button>
-                <button
-                  onClick={() => setView('timeline')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === 'timeline' ? 'bg-forest-600 text-white' : 'text-ink-600 hover:bg-cream-100'}`}
-                >
-                  ⏱ Timeline
+          {/* Day-by-day header + actions */}
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <h2 className="font-display text-xl font-bold text-ink-900">
+              {editMode ? 'Editing itinerary' : 'Day-by-day'}
+            </h2>
+
+            {editMode ? (
+              <div className="flex items-center gap-2">
+                <button onClick={cancelEdit} className="btn-ghost text-sm">Cancel</button>
+                <button onClick={saveEdit} disabled={saving} className="btn-primary text-sm px-4 py-2">
+                  {saving ? 'Saving…' : 'Save changes'}
                 </button>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {itinerary?.days?.length > 0 && (
+                  <div className="bg-white border border-cream-300 rounded-xl p-1 flex gap-1">
+                    <button
+                      onClick={() => setView('cards')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === 'cards' ? 'bg-forest-600 text-white' : 'text-ink-600 hover:bg-cream-100'}`}
+                    >
+                      ▤ Cards
+                    </button>
+                    <button
+                      onClick={() => setView('timeline')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${view === 'timeline' ? 'bg-forest-600 text-white' : 'text-ink-600 hover:bg-cream-100'}`}
+                    >
+                      ⏱ Timeline
+                    </button>
+                  </div>
+                )}
+                <button onClick={startEdit} className="btn-secondary text-sm px-4 py-2">✎ Edit itinerary</button>
+                {savedFlash && <span className="text-forest-700 text-sm font-medium">{savedFlash}</span>}
+              </div>
+            )}
+          </div>
+
+          {/* EDIT MODE — manual editor */}
+          {editMode && (
+            <>
+              <p className="text-sm text-ink-500 mb-4">
+                Edit anything below, drag order with the arrows, or tap <strong>Refine with AI</strong> to have the assistant reshape it. Changes save only when you hit <strong>Save changes</strong>.
+              </p>
+              <ItineraryEditor itinerary={draft} onChange={setDraft} destination={trip.destination} />
+            </>
           )}
 
-          {/* Days — cards view */}
-          {view === 'cards' && (
+          {/* READ-ONLY — cards view */}
+          {!editMode && view === 'cards' && (
             <div className="space-y-4">
               {itinerary?.days?.map((day) => (
                 <div key={day.day} className="card p-6">
@@ -245,8 +331,8 @@ export default function TripDetailPage() {
             </div>
           )}
 
-          {/* Days — timeline view */}
-          {view === 'timeline' && (
+          {/* READ-ONLY — timeline view */}
+          {!editMode && view === 'timeline' && (
             <div className="relative pl-6 sm:pl-8">
               <div className="absolute left-2 sm:left-3 top-2 bottom-2 w-0.5 bg-cream-300" />
               <div className="space-y-6">
@@ -277,15 +363,15 @@ export default function TripDetailPage() {
             </div>
           )}
 
-          {/* Packing list */}
-          {itinerary?.packingList?.length > 0 && (
+          {/* Packing list — read-only mode only */}
+          {!editMode && itinerary?.packingList?.length > 0 && (
             <div className="mt-6">
               <PackingList packingList={itinerary.packingList} storageKey={trip._id} />
             </div>
           )}
 
-          {/* Tips */}
-          {tipsList.length > 0 && (
+          {/* Tips — read-only mode only (edited inside the editor) */}
+          {!editMode && tipsList.length > 0 && (
             <div className="card p-6 mt-6 bg-terracotta-50 border-terracotta-100">
               <h2 className="font-display text-lg font-bold text-terracotta-700 mb-3">Travel tips</h2>
               <ul className="space-y-2">
@@ -300,6 +386,52 @@ export default function TripDetailPage() {
           )}
         </div>
       </section>
+
+      {/* AI chat */}
+      <PlannerChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        itinerary={chatItinerary}
+        onItineraryUpdate={applyAiUpdate}
+        formContext={formContext}
+      />
+
+      {/* Sticky save bar while editing */}
+      {editMode && (
+        <div className="fixed bottom-0 inset-x-0 z-30 bg-cream-50/95 backdrop-blur border-t border-cream-300">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-12 py-3 flex items-center justify-between gap-3">
+            <button
+              onClick={() => setChatOpen(true)}
+              className="btn-ghost text-sm inline-flex items-center gap-2"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
+              Refine with AI
+            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={cancelEdit} className="btn-ghost text-sm">Cancel</button>
+              <button onClick={saveEdit} disabled={saving} className="btn-primary text-sm px-5 py-2">
+                {saving ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating "Refine with AI" pill — read-only mode */}
+      {!editMode && !chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-30 bg-forest-600 hover:bg-forest-700 text-white pl-3 pr-5 py-3 rounded-full shadow-card transition flex items-center gap-2 group"
+          aria-label="Open AI chat"
+        >
+          <span className="w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center group-hover:scale-105 transition-transform">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+            </svg>
+          </span>
+          <span className="font-semibold text-sm pr-1">Refine with AI</span>
+        </button>
+      )}
     </Layout>
   );
 }
