@@ -29,7 +29,7 @@ const QuickAction = ({ icon, label, onClick, accent }) => (
 // Modal listing followers / following.
 function FollowListModal({ title, users, loading, onClose, onNavigate }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-night/40 backdrop-blur-sm" onClick={onClose}>
       <div className="card w-full max-w-md max-h-[70vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-cream-200">
           <h3 className="font-display font-bold text-ink-900">{title}</h3>
@@ -256,17 +256,12 @@ export default function UserProfilePage() {
       <section className="w-full px-4 sm:px-8 lg:px-12 py-10">
         <div className="max-w-5xl mx-auto">
 
-          {/* Cover + header card */}
+          {/* Header card — big avatar beside identity, no cover */}
           <div className="card overflow-hidden mb-6">
-            <div className="h-32 sm:h-40 bg-gradient-to-r from-forest-600 via-forest-700 to-terracotta-600 relative">
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)' }} />
-            </div>
-
-            <div className="relative z-10 px-6 sm:px-8 -mt-14 sm:-mt-16">
-              <Avatar name={profileName} src={profilePic} size="xl" className="ring-4 ring-white shadow-card" />
-            </div>
-
-            <div className="px-6 sm:px-8 pb-6 pt-4">
+            <div className="px-6 sm:px-8 py-6 sm:py-8">
+              <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 sm:items-start">
+                <Avatar name={profileName} src={profilePic} size="2xl" className="ring-4 ring-cream-200 shadow-card shrink-0 mx-auto sm:mx-0" />
+                <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
                 {isOwnProfile ? (
                   <>
@@ -307,7 +302,7 @@ export default function UserProfilePage() {
                   {profileInterests.length > 0 && (
                     <span className="inline-flex flex-wrap gap-1.5">
                       {profileInterests.slice(0, 5).map((i) => (
-                        <span key={i} className="text-xs bg-cream-200 text-ink-700 px-2 py-0.5 rounded-full">{i}</span>
+                        <span key={i} className="text-xs bg-blossom-50 text-blossom-700 border border-blossom-100 px-2.5 py-0.5 rounded-full font-medium">{i}</span>
                       ))}
                     </span>
                   )}
@@ -335,6 +330,8 @@ export default function UserProfilePage() {
                       <p className="text-xs text-ink-500 uppercase tracking-wider">Trips</p>
                     </div>
                   )}
+                </div>
+              </div>
                 </div>
               </div>
 
@@ -386,8 +383,8 @@ export default function UserProfilePage() {
                             onClick={() => toggleInterest(interest)}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                               active
-                                ? 'bg-terracotta-500 text-white border-terracotta-500'
-                                : 'bg-white text-ink-700 border-cream-300 hover:border-terracotta-400'
+                                ? 'bg-blossom-500 text-white border-blossom-500'
+                                : 'bg-white text-ink-700 border-cream-300 hover:border-blossom-300'
                             }`}
                           >
                             {interest}
@@ -544,7 +541,7 @@ export default function UserProfilePage() {
                   >
                     <div className="relative h-32 overflow-hidden">
                       <SmartImage query={trip.destination} alt={trip.destination} size={600} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-ink-900/55 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-night/55 to-transparent" />
                     </div>
                     <div className="p-4">
                       <p className="font-display font-bold text-ink-900 mb-1 truncate">{trip.title || trip.destination}</p>

@@ -8,6 +8,7 @@ import Layout from '../components/Layout';
 import Avatar from '../components/Avatar';
 import PostCard from '../components/PostCard';
 import ImageUpload from '../components/ImageUpload';
+import { pickOne, FEED_HEADLINES, FEED_SUBTITLES, COMPOSER_PROMPTS, fillName } from '../utils/copy';
 
 const isProbablyImageUrl = (url) =>
   /^https?:\/\//i.test(url) &&
@@ -53,6 +54,14 @@ export default function FeedPage() {
   const [tab, setTab] = useState('latest');
 
   const dailyTip = useMemo(() => TRAVEL_TIPS[Math.floor(Date.now() / 86400000) % TRAVEL_TIPS.length], []);
+
+  // Rotating editorial copy — new flavor every visit.
+  const headline = useMemo(() => pickOne(FEED_HEADLINES), []);
+  const subtitle = useMemo(() => pickOne(FEED_SUBTITLES), []);
+  const composerPrompt = useMemo(
+    () => fillName(pickOne(COMPOSER_PROMPTS), user?.name?.split(' ')[0]),
+    [user?.name],
+  );
 
   useEffect(() => {
     fetchPosts();
@@ -209,7 +218,7 @@ export default function FeedPage() {
                   <p className="text-[10px] uppercase text-ink-500 tracking-wider">Posts</p>
                 </div>
                 <div className="text-center bg-cream-100 rounded-xl p-3">
-                  <p className="font-display text-xl font-bold text-coral-600">{myTotalLikes}</p>
+                  <p className="font-display text-xl font-bold text-blossom-500">{myTotalLikes}</p>
                   <p className="text-[10px] uppercase text-ink-500 tracking-wider">Likes</p>
                 </div>
               </div>
@@ -258,18 +267,20 @@ export default function FeedPage() {
 
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h1 className="font-display text-3xl font-bold text-ink-900">Travel feed</h1>
-                <p className="text-ink-500 text-sm">Moments from travelers around the world.</p>
+                <h1 className="font-display text-3xl sm:text-[2.1rem] font-semibold text-ink-900 leading-tight">
+                  {headline.before}<em className="italic text-blossom-500">{headline.accent}</em>
+                </h1>
+                <p className="text-ink-500 text-sm mt-1">{subtitle}</p>
               </div>
             </div>
 
             {/* Filter pills */}
-            <div className="bg-white border border-cream-300 rounded-2xl p-1 flex gap-1 mb-5 overflow-x-auto">
+            <div className="bg-white border border-cream-300 rounded-full p-1 flex gap-1 mb-5 overflow-x-auto">
               {FILTER_TABS.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap ${
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
                     tab === t.id
                       ? 'bg-forest-600 text-white shadow-soft'
                       : 'text-ink-700 hover:bg-cream-100'
@@ -287,12 +298,14 @@ export default function FeedPage() {
                 <Avatar name={user?.name} src={user?.profilePicture} size="sm" />
                 <div className="flex-1 space-y-3">
                   <textarea
-                    placeholder="Share a travel moment, tip, or memory…"
+                    placeholder={composerPrompt}
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
                     onFocus={() => setComposerExpanded(true)}
                     rows={composerExpanded ? 3 : 1}
-                    className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 placeholder-ink-400 resize-none focus:outline-none focus:ring-2 focus:ring-forest-500 transition-all"
+                    className={`w-full border border-cream-300 px-4 py-2.5 text-sm text-ink-900 placeholder-ink-400 resize-none focus:outline-none focus:ring-2 focus:ring-forest-500 transition-all ${
+                      composerExpanded ? 'rounded-xl' : 'rounded-full bg-cream-100 hover:bg-cream-200 cursor-text'
+                    }`}
                   />
 
                   {composerExpanded && (
@@ -383,16 +396,21 @@ export default function FeedPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {visiblePosts.map((post) => (
-                  <PostCard
+                {visiblePosts.map((post, i) => (
+                  <div
                     key={post._id}
-                    post={post}
-                    user={user}
-                    onLike={handleLike}
-                    saved={savedIds.has(post._id)}
-                    onToggleSave={handleToggleSave}
-                    highlight={highlightId === post._id}
-                  />
+                    className="rise-in"
+                    style={{ animationDelay: `${Math.min(i, 6) * 70}ms` }}
+                  >
+                    <PostCard
+                      post={post}
+                      user={user}
+                      onLike={handleLike}
+                      saved={savedIds.has(post._id)}
+                      onToggleSave={handleToggleSave}
+                      highlight={highlightId === post._id}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -431,9 +449,9 @@ export default function FeedPage() {
               )}
             </div>
 
-            <div className="card p-5 bg-gradient-to-br from-terracotta-500 to-terracotta-600 border-0 text-white">
-              <p className="text-xs uppercase tracking-wider text-white/80 font-semibold mb-2">Travel tip of the day</p>
-              <p className="text-sm leading-relaxed">{dailyTip}</p>
+            <div className="card p-5 bg-gradient-to-br from-forest-700 via-terracotta-600 to-blossom-500 border-0 text-white">
+              <p className="text-xs uppercase tracking-[0.14em] text-white/80 font-semibold mb-2">Tip of the day</p>
+              <p className="text-[15px] leading-relaxed font-display italic">"{dailyTip}"</p>
             </div>
 
             <div className="card p-5">

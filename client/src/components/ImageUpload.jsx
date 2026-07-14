@@ -126,7 +126,7 @@ export default function ImageUpload({
             type="button"
             onClick={() => { onChange(''); setError(''); }}
             title="Remove image"
-            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-ink-900/60 hover:bg-ink-900/80 text-white flex items-center justify-center backdrop-blur-sm transition"
+            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-night/60 hover:bg-night/80 text-white flex items-center justify-center backdrop-blur-sm transition"
           >
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M18 6L6 18M6 6l12 12" />

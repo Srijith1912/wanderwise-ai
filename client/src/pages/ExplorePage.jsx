@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
 import DestinationInput from '../components/DestinationInput';
 import SmartImage from '../components/SmartImage';
+import { pickOne, HERO_HEADLINES, HERO_SUBTITLES } from '../utils/copy';
 
 const formatPlace = (name, country) => {
   if (!country) return name;
@@ -66,6 +67,10 @@ export default function ExplorePage() {
       active = false;
     };
   }, []);
+
+  // Rotating editorial copy — fresh line each page load, stable while mounted.
+  const hero = useMemo(() => pickOne(HERO_HEADLINES), []);
+  const heroSub = useMemo(() => pickOne(HERO_SUBTITLES), []);
 
   // Hero quick-plan form
   const [heroDestination, setHeroDestination] = useState('');
@@ -139,19 +144,19 @@ export default function ExplorePage() {
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-ink-900/55 via-ink-900/25 to-ink-900/35" />
+          <div className="absolute inset-0 bg-gradient-to-b from-night/55 via-night/25 to-night/35" />
         </div>
 
         <div className="relative w-full px-4 sm:px-8 lg:px-12 py-12">
           <div className="max-w-5xl mx-auto text-center text-white">
-            <span className="inline-block px-3 py-1 rounded-full bg-white/15 backdrop-blur text-xs font-medium tracking-wide uppercase">
-              AI travel planner
+            <span className="inline-block px-3.5 py-1 rounded-full bg-white/15 backdrop-blur text-xs font-medium tracking-[0.18em] uppercase">
+              Plan smarter · Wander further
             </span>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold mt-4 leading-tight">
-              Where will the wind take you next?
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold mt-5 leading-[1.08] !text-white drop-shadow-sm">
+              {hero.before}<em className="italic text-terracotta-200">{hero.accent}</em>{hero.after}
             </h1>
-            <p className="mt-4 text-white/85 text-lg max-w-2xl mx-auto">
-              Generate personalized itineraries in seconds, browse curated destinations, and share moments with travelers around the world.
+            <p className="mt-5 text-white/85 text-lg max-w-2xl mx-auto">
+              {heroSub}
             </p>
           </div>
 

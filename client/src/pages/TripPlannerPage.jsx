@@ -283,9 +283,9 @@ export default function TripPlannerPage() {
       <section className="bg-gradient-to-b from-cream-200 to-cream-100 border-b border-cream-300">
         <div className="w-full px-4 sm:px-8 lg:px-12 pt-8 pb-5">
           <div className="max-w-7xl mx-auto">
-            <p className="text-xs font-semibold tracking-wider uppercase text-forest-700 mb-1">AI trip planner</p>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900">
-              Tell us about the trip — we'll handle the planning.
+            <p className="text-xs font-semibold tracking-[0.16em] uppercase text-terracotta-600 mb-1">Trip planner</p>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
+              Tell us about the trip — <em className="italic text-forest-600">we'll handle the planning.</em>
             </h1>
           </div>
         </div>
@@ -377,8 +377,8 @@ export default function TripPlannerPage() {
                       onClick={() => toggleInterest(interest)}
                       className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
                         active
-                          ? "bg-terracotta-500 text-white border-terracotta-500"
-                          : "bg-white text-ink-700 border-cream-300 hover:border-terracotta-400"
+                          ? "bg-blossom-500 text-white border-blossom-500"
+                          : "bg-white text-ink-700 border-cream-300 hover:border-blossom-300"
                       }`}
                     >
                       {interest}
@@ -492,7 +492,7 @@ export default function TripPlannerPage() {
                   size={1200}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-ink-900/70 via-ink-900/50 to-forest-900/65" />
+                <div className="absolute inset-0 bg-gradient-to-br from-night/70 via-night/50 to-forest-900/65" />
                 <div className="relative">
                   <h2 className="font-display text-2xl font-bold mb-1">{itinerary.destination}</h2>
                   <p className="text-white/80 text-sm mb-3">
@@ -579,7 +579,7 @@ export default function TripPlannerPage() {
       {/* Discard-unsaved-itinerary modal */}
       {discardModal && (
         <div
-          className="fixed inset-0 z-[60] bg-ink-900/50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] bg-night/50 flex items-center justify-center p-4"
           onClick={cancelDiscard}
         >
           <div

@@ -124,7 +124,7 @@ export default function TripDetailPage() {
               size={1200}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-ink-900/70 via-ink-900/50 to-forest-900/60" />
+            <div className="absolute inset-0 bg-gradient-to-br from-night/70 via-night/50 to-forest-900/60" />
 
             <div className="relative">
               <p className="text-xs uppercase tracking-wider text-white/70 font-semibold mb-2">Saved itinerary</p>
@@ -148,7 +148,7 @@ export default function TripDetailPage() {
                   </>
                 ) : (
                   <>
-                    <h1 className="font-display text-3xl sm:text-4xl font-bold flex-1">
+                    <h1 className="font-display text-3xl sm:text-4xl font-bold flex-1 !text-white drop-shadow-sm">
                       {trip.title || trip.destination}
                     </h1>
                     <button onClick={() => setIsEditingTitle(true)} className="text-white/80 hover:text-white text-sm" title="Edit title">

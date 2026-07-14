@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 const PALETTE = [
   "from-forest-500 to-forest-700",
   "from-terracotta-500 to-terracotta-700",
-  "from-coral-500 to-coral-700",
+  "from-blossom-400 to-blossom-600",
   "from-forest-400 to-terracotta-500",
-  "from-terracotta-400 to-coral-500",
+  "from-terracotta-400 to-blossom-500",
+  "from-blossom-500 to-forest-600",
 ];
 
 const initialsFor = (name = "?") =>
@@ -29,6 +30,7 @@ const SIZE_CLASSES = {
   md: "w-12 h-12 text-base",
   lg: "w-20 h-20 text-2xl",
   xl: "w-28 h-28 text-3xl",
+  "2xl": "w-32 h-32 sm:w-40 sm:h-40 text-5xl",
 };
 
 export default function Avatar({

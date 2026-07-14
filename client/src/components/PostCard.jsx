@@ -95,7 +95,7 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
         {post.destinationTag && (
           <button
             onClick={() => navigate(`/?tag=${encodeURIComponent(post.destinationTag)}`)}
-            className="text-xs font-medium text-forest-700 bg-forest-50 hover:bg-forest-100 border border-forest-100 px-2.5 py-1 rounded-full transition shrink-0"
+            className="text-xs font-semibold text-blossom-600 bg-blossom-50 hover:bg-blossom-100 border border-blossom-100 px-2.5 py-1 rounded-full transition shrink-0"
           >
             📍 {post.destinationTag}
           </button>
@@ -125,14 +125,14 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
       <div className="px-5 py-3 flex items-center gap-1">
         <button
           onClick={handleLike}
-          className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition ${
-            isLiked ? 'text-coral-600' : 'text-ink-600 hover:text-coral-500 hover:bg-coral-50'
+          className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full transition ${
+            isLiked ? 'text-blossom-500' : 'text-ink-600 hover:text-blossom-500 hover:bg-blossom-50'
           }`}
         >
-          <span className={`relative inline-block ${popping ? 'animate-[pulse_0.35s_ease-out]' : ''}`}>
+          <span className={`relative inline-block ${popping ? 'heart-burst' : ''}`}>
             <svg
               viewBox="0 0 24 24"
-              className={`w-5 h-5 transition-transform ${popping ? 'scale-125' : 'scale-100'}`}
+              className="w-[22px] h-[22px]"
               fill={isLiked ? 'currentColor' : 'none'}
               stroke="currentColor"
               strokeWidth="2"
@@ -140,12 +140,12 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </span>
-          <span className="text-sm font-medium">{formatCount(post.likes.length)}</span>
+          <span className="text-sm font-semibold">{formatCount(post.likes.length)}</span>
         </button>
 
         <button
           onClick={() => setShowComments((v) => !v)}
-          className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition ${
+          className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full transition ${
             showComments ? 'text-forest-700 bg-forest-50' : 'text-ink-600 hover:text-forest-700 hover:bg-forest-50'
           }`}
         >
@@ -158,7 +158,7 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
         <button
           onClick={handleShare}
           title="Copy link"
-          className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-ink-600 hover:text-forest-700 hover:bg-forest-50 transition"
+          className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-ink-600 hover:text-forest-700 hover:bg-forest-50 transition"
         >
           {shared ? (
             <>
@@ -182,7 +182,7 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
         <button
           onClick={() => onToggleSave(post._id)}
           title={saved ? 'Saved' : 'Save post'}
-          className={`ml-auto inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition ${
+          className={`ml-auto inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full transition ${
             saved ? 'text-terracotta-600' : 'text-ink-500 hover:text-terracotta-600 hover:bg-terracotta-50'
           }`}
         >

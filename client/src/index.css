@@ -3,8 +3,114 @@
 @tailwind utilities;
 
 @layer base {
+  /* ---------- Light theme (default) — warm paper & espresso ---------- */
   :root {
     color-scheme: light;
+
+    --cream-50: 255 253 247;
+    --cream-100: 251 246 236;
+    --cream-200: 243 234 214;
+    --cream-300: 232 223 203;
+
+    --ink-900: 35 30 25;
+    --ink-800: 50 42 34;
+    --ink-700: 74 64 54;
+    --ink-600: 107 95 81;
+    --ink-500: 138 125 109;
+    --ink-400: 173 162 144;
+    --ink-300: 220 211 194;
+
+    --forest-50: 234 242 236;
+    --forest-100: 207 227 213;
+    --forest-200: 163 199 175;
+    --forest-300: 113 165 136;
+    --forest-400: 71 130 98;
+    --forest-500: 53 107 76;
+    --forest-600: 35 90 66;
+    --forest-700: 26 67 49;
+    --forest-800: 18 49 35;
+    --forest-900: 11 32 23;
+
+    --terracotta-50: 249 239 216;
+    --terracotta-100: 241 220 174;
+    --terracotta-200: 230 192 116;
+    --terracotta-300: 217 167 72;
+    --terracotta-400: 206 148 51;
+    --terracotta-500: 198 137 42;
+    --terracotta-600: 166 110 30;
+    --terracotta-700: 133 86 24;
+
+    --coral-50: 252 231 234;
+    --coral-100: 247 198 206;
+    --coral-400: 224 91 106;
+    --coral-500: 214 68 87;
+    --coral-600: 184 52 71;
+    --coral-700: 142 38 55;
+
+    --blossom-50: 251 233 241;
+    --blossom-100: 246 203 224;
+    --blossom-200: 239 166 201;
+    --blossom-300: 230 127 177;
+    --blossom-400: 218 92 155;
+    --blossom-500: 198 63 132;
+    --blossom-600: 166 46 107;
+    --blossom-700: 130 35 83;
+  }
+
+  /* ---------- Dark theme — candlelit lodge, not inverted paper ----------
+     Values are re-picked per role (surfaces darken, text lightens, accents
+     brighten just enough) rather than mathematically flipped. */
+  .dark {
+    color-scheme: dark;
+
+    --cream-50: 38 30 20;    /* card surface */
+    --cream-100: 26 20 12;   /* page ground */
+    --cream-200: 49 39 26;   /* hover */
+    --cream-300: 62 50 34;   /* borders */
+
+    --ink-900: 242 235 221;  /* headings */
+    --ink-800: 226 217 200;  /* body */
+    --ink-700: 198 187 169;
+    --ink-600: 167 155 136;
+    --ink-500: 140 129 114;
+    --ink-400: 111 100 85;
+    --ink-300: 74 61 43;     /* input borders */
+
+    --forest-50: 31 46 37;   /* tint backgrounds */
+    --forest-100: 40 59 47;
+    --forest-200: 58 88 71;
+    --forest-300: 78 118 96;
+    --forest-400: 93 143 116;
+    --forest-500: 63 138 99;
+    --forest-600: 47 122 85;  /* primary button */
+    --forest-700: 63 144 104; /* hover + link text */
+    --forest-800: 99 185 142;
+    --forest-900: 10 27 18;   /* stays deep — used in photo scrims */
+
+    --terracotta-50: 47 37 19;
+    --terracotta-100: 64 49 20;
+    --terracotta-200: 233 199 126; /* stays light — gold text on photos */
+    --terracotta-300: 222 172 85;
+    --terracotta-400: 217 165 68;
+    --terracotta-500: 209 155 54;
+    --terracotta-600: 200 145 56;
+    --terracotta-700: 226 181 99;
+
+    --coral-50: 52 20 25;
+    --coral-100: 71 32 39;
+    --coral-400: 228 112 126;
+    --coral-500: 226 91 105;
+    --coral-600: 239 127 139;
+    --coral-700: 244 154 163;
+
+    --blossom-50: 53 21 37;
+    --blossom-100: 74 31 51;
+    --blossom-200: 99 42 69;
+    --blossom-300: 138 61 99;
+    --blossom-400: 199 78 140;
+    --blossom-500: 217 86 155;
+    --blossom-600: 230 127 180;
+    --blossom-700: 240 163 201;
   }
 
   html,
@@ -17,8 +123,8 @@
 
   body {
     font-family: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
-    background-color: #FAF7F0;
-    color: #1F2933;
+    background-color: rgb(var(--cream-100));
+    color: rgb(var(--ink-800));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -34,17 +140,17 @@
   h2,
   h3,
   h4 {
-    font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
-    color: #0F1419;
+    font-family: "Fraunces", Georgia, Cambria, serif;
+    color: rgb(var(--ink-900));
     letter-spacing: -0.01em;
+    font-weight: 600;
   }
 
   input,
   select,
   textarea {
-    color: #0F1419;
-    background-color: #ffffff;
-    color-scheme: light;
+    color: rgb(var(--ink-900));
+    background-color: rgb(var(--cream-50));
   }
 
   select {
@@ -53,15 +159,57 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: #9AA1AC;
+    color: rgb(var(--ink-400));
+  }
+
+  /* Utilities that hardcode white flip to the dark surface; text-white and
+     border-white are left alone on purpose (photo overlays, button labels). */
+  .dark .bg-white {
+    background-color: rgb(38 30 20);
+  }
+  .dark .bg-white\/95 {
+    background-color: rgb(38 30 20 / 0.95);
+  }
+  .dark .ring-white {
+    --tw-ring-color: rgb(38 30 20);
   }
 }
 
 @layer utilities {
+  /* Editorial accent — italic serif word inside a headline */
+  .accent-word {
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  /* Gentle rise-in for feed cards; respects reduced motion */
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .rise-in {
+    animation: rise-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Heart burst on like */
+  @keyframes heart-burst {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.45); }
+    60%  { transform: scale(0.9); }
+    100% { transform: scale(1); }
+  }
+  .heart-burst {
+    animation: heart-burst 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise-in, .heart-burst { animation: none; }
+  }
+
   /* Always-visible thin scrollbar for chat panels and other tall scroll areas */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #D6CFBF transparent;
+    scrollbar-color: rgb(var(--ink-300)) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
@@ -71,11 +219,11 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #D6CFBF;
+    background-color: rgb(var(--ink-300));
     border-radius: 8px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: #B7AE96;
+    background-color: rgb(var(--ink-400));
   }
 }
 
@@ -89,7 +237,7 @@
   }
 
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 bg-terracotta-500 hover:bg-terracotta-600 text-white font-semibold px-5 py-2.5 rounded-xl shadow-soft transition;
+    @apply inline-flex items-center justify-center gap-2 bg-terracotta-500 hover:bg-terracotta-600 text-night font-semibold px-5 py-2.5 rounded-xl shadow-soft transition;
   }
 
   .btn-ghost {
@@ -97,10 +245,10 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-ink-300 bg-white text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-forest-500 focus:border-transparent transition;
+    @apply w-full px-4 py-3 rounded-xl border border-ink-300 bg-white text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-terracotta-400 focus:border-transparent transition;
   }
 
   .card {
-    @apply bg-white rounded-2xl border border-cream-300 shadow-soft;
+    @apply bg-cream-50 rounded-2xl border border-cream-300 shadow-soft;
   }
 }

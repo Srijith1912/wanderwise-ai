@@ -97,7 +97,7 @@ export default function PlannerChat({
     <>
       {/* Mobile backdrop — only shows when open and on small screens */}
       <div
-        className={`fixed inset-0 bg-ink-900/40 z-40 transition-opacity lg:hidden ${
+        className={`fixed inset-0 bg-night/40 z-40 transition-opacity lg:hidden ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}

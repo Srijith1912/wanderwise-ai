@@ -106,7 +106,7 @@ export default function SavedTripsPage() {
                       size={600}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink-900/55 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-night/55 to-transparent" />
                     <div className="absolute bottom-2 left-3 right-3 text-white">
                       <p className="text-[11px] uppercase tracking-wider opacity-80">Itinerary</p>
                       <p className="font-display font-bold text-base truncate">{trip.title || trip.destination}</p>

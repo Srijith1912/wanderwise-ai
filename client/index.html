@@ -7,10 +7,21 @@
     <meta name="description" content="WanderWise AI — Plan smarter trips with AI-powered itineraries, curated destinations, and a global travel community." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>WanderWise AI · Plan smarter trips</title>
   </head>
   <body>
+    <!-- Apply saved theme before the app paints to avoid a light/dark flash -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("wanderwise:theme");
+          if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

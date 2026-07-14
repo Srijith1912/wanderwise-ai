@@ -4,14 +4,14 @@ import { useAuth } from "../contexts/AuthContext";
 import Avatar from "./Avatar";
 
 const Logo = () => (
-  <Link to="/" className="flex items-center gap-2 group">
-    <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-forest-500 to-forest-700 flex items-center justify-center shadow-soft group-hover:scale-105 transition">
+  <Link to="/" className="flex items-center gap-2.5 group">
+    <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-forest-500 to-forest-700 flex items-center justify-center shadow-soft group-hover:scale-105 group-hover:rotate-3 transition">
       <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
         <path d="M21 7l-6 2-3-3-2 1 2 3-3 1-2-2-1 1 2 2-2 5 1 1 5-2 2 2 1-1-2-2 1-3 3 2 1-2-3-3 2-6z" />
       </svg>
     </span>
-    <span className="font-display font-bold text-xl text-ink-900 tracking-tight">
-      WanderWise
+    <span className="font-display text-[1.35rem] text-ink-900 tracking-tight leading-none">
+      <em className="italic font-medium">Wander</em><span className="font-semibold">Wise</span>
     </span>
   </Link>
 );
@@ -38,6 +38,22 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Theme — the <html> class is set pre-paint by an inline script in index.html;
+  // this state just mirrors it for the icon and persists changes.
+  const [dark, setDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("wanderwise:theme", next ? "dark" : "light");
+    } catch {
+      /* storage unavailable — theme still applies for this session */
+    }
+  };
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -73,6 +89,24 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              className="p-2 rounded-full text-ink-600 hover:text-ink-900 hover:bg-cream-200 transition"
+            >
+              {dark ? (
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+                </svg>
+              )}
+            </button>
+
             {!user ? (
               <>
                 <Link
