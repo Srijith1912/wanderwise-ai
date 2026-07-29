@@ -91,7 +91,7 @@ export default function FeedPage() {
       setLoadingFeed(true);
       const data = await getPosts();
       setPosts(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load posts.');
     } finally {
       setLoadingFeed(false);
@@ -149,7 +149,7 @@ export default function FeedPage() {
       setDestinationTag('');
       setImageUrl('');
       setComposerExpanded(false);
-    } catch (err) {
+    } catch {
       setPostError('Failed to create post. Try again.');
     } finally {
       setSubmitting(false);
@@ -174,7 +174,7 @@ export default function FeedPage() {
     setFollowingPosts((prev) => applyLike(prev, postId));
     try {
       await likePost(postId);
-    } catch (err) {
+    } catch {
       fetchPosts();
     }
   };

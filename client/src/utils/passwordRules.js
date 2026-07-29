@@ -7,7 +7,7 @@ export const PASSWORD_RULES = [
   {
     id: "special",
     label: "One special character (!@#$…)",
-    test: (p) => /[!@#$%^&*()_\-+=\[\]{};:'",.<>\/?\\|`~]/.test(p),
+    test: (p) => /[!@#$%^&*()_\-+=[\]{};:'",.<>/?\\|`~]/.test(p),
   },
 ];
 

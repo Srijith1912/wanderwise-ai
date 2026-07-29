@@ -25,7 +25,7 @@ export default function SavedTripsPage() {
     try {
       const data = await getTrips();
       setTrips(Array.isArray(data) ? data : data.trips || []);
-    } catch (err) {
+    } catch {
       setError('Failed to load trips. Please try again.');
     } finally {
       setLoading(false);
@@ -38,7 +38,7 @@ export default function SavedTripsPage() {
     try {
       await deleteTripById(id);
       setTrips((prev) => prev.filter((trip) => trip._id !== id));
-    } catch (err) {
+    } catch {
       alert('Failed to delete trip. Please try again.');
     } finally {
       setDeletingId(null);

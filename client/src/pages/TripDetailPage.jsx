@@ -63,7 +63,7 @@ export default function TripDetailPage() {
       const tripData = data.trip || data;
       setTrip(tripData);
       setTitleInput(tripData.title || tripData.destination);
-    } catch (err) {
+    } catch {
       setError('Failed to load trip.');
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export default function TripDetailPage() {
       const updated = await updateTrip(id, { title: titleInput.trim() });
       setTrip(updated.trip || updated);
       setIsEditingTitle(false);
-    } catch (err) {
+    } catch {
       alert('Failed to update title. Please try again.');
     } finally {
       setSavingTitle(false);
@@ -89,7 +89,7 @@ export default function TripDetailPage() {
     try {
       await deleteTripById(id);
       navigate('/trips');
-    } catch (err) {
+    } catch {
       alert('Failed to delete trip.');
     }
   };
@@ -120,7 +120,7 @@ export default function TripDetailPage() {
       setDraft(null);
       setSavedFlash('Itinerary saved.');
       setTimeout(() => setSavedFlash(''), 2500);
-    } catch (err) {
+    } catch {
       alert('Failed to save the itinerary. Please try again.');
     } finally {
       setSaving(false);

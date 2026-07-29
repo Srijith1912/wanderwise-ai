@@ -34,7 +34,7 @@ An AI-powered travel planning web app where users generate personalized itinerar
 
 ### Account
 - **Authentication** — Email/password (JWT) with strong password rules (≥8 chars, uppercase, number, special char) and live validation, plus **Sign in with Google** (OAuth).
-- **Unified Profile** — Account hub with bio, location, travel-interest chips, profile picture, posts, saved trips, bookmarks, follow stats, and quick actions.
+- **Unified Profile** — Account hub with bio, location, travel-interest chips, profile picture, posts, saved trips, bookmarks, a private **Archived** tab, follow stats, and quick actions.
 - **Settings** — Change password and email (both require current-password confirmation).
 - **Public Explore landing** — Browse 20 curated destinations + a weekly AI-cached "Trending this week" strip without an account; sign up only when you want to plan or post.
 - **Contact page** — A form (name/email/message) wired to Formspree, with an email fallback.
@@ -158,6 +158,8 @@ Render's free tier puts the backend to sleep after ~15 minutes without traffic, 
 
 ```
 wanderwise-ai/
+├── .github/workflows/keep-alive.yml    # Scheduled ping so Render doesn't cold-start
+│
 ├── client/                             # React frontend (Vite)
 │   ├── src/
 │   │   ├── components/
@@ -170,14 +172,16 @@ wanderwise-ai/
 │   │   │   ├── MapView.jsx              # Mapbox map, labeled place pins
 │   │   │   ├── PackingList.jsx          # Editable packing checklist
 │   │   │   ├── PlannerChat.jsx          # AI refinement chat popup
-│   │   │   ├── PostCard.jsx             # Feed card: like/comment/save/share
+│   │   │   ├── PostCard.jsx             # Feed card: like/comment/save/share,
+│   │   │   │                            # owner ⋮ menu + edit-post modal
 │   │   │   ├── SmartImage.jsx           # Pexels → Wikipedia → curated fallback
 │   │   │   └── WeatherStrip.jsx         # 5-day forecast
 │   │   ├── contexts/AuthContext.jsx     # Auth state + useAuth()
 │   │   ├── pages/                       # Explore, Feed, Login, Signup, Settings, Contact,
 │   │   │                                # TripPlanner, TripDetail, SavedTrips, UserProfile
 │   │   ├── services/                    # auth, explore, post, trip, user, weather
-│   │   └── utils/                       # cloudinary, geocode, passwordRules, photo, wikiPhoto
+│   │   └── utils/                       # cloudinary, copy (rotating editorial lines),
+│   │   │                                # geocode, passwordRules, photo, wikiPhoto
 │   ├── tailwind.config.js · vercel.json · vite.config.js
 │
 ├── server/                             # Express backend

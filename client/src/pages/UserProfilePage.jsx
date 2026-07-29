@@ -142,7 +142,7 @@ export default function UserProfilePage() {
             if (active) setTrips([]);
           }
         }
-      } catch (err) {
+      } catch {
         if (active) setError('Failed to load profile.');
       } finally {
         if (active) setLoading(false);

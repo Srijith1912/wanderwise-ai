@@ -14,7 +14,7 @@ const validatePassword = (password) => {
     length: typeof password === "string" && password.length >= 8,
     uppercase: /[A-Z]/.test(password || ""),
     number: /\d/.test(password || ""),
-    special: /[!@#$%^&*()_\-+=\[\]{};:'",.<>\/?\\|`~]/.test(password || ""),
+    special: /[!@#$%^&*()_\-+=[\]{};:'",.<>/?\\|`~]/.test(password || ""),
   };
   const failed = [];
   if (!checks.length) failed.push("at least 8 characters");

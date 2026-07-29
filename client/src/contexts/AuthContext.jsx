@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
           setToken(storedToken);
           const userData = await authService.getCurrentUser(storedToken);
           setUser(userData);
-        } catch (err) {
+        } catch {
           localStorage.removeItem('token');
           setToken(null);
           setUser(null);

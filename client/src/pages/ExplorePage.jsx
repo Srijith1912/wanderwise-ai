@@ -94,7 +94,7 @@ export default function ExplorePage() {
         setError('');
         const data = await getDestinations(filters);
         if (active) setDestinations(data);
-      } catch (err) {
+      } catch {
         if (active) setError('Failed to load destinations. Please try again.');
       } finally {
         if (active) setLoading(false);
