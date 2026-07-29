@@ -38,7 +38,7 @@ const createPost = async (req, res) => {
 // @access  Protected
 const getPosts = async (req, res) => {
   try {
-    const posts = await Post.find()
+    const posts = await Post.find({ isArchived: { $ne: true } })
       .populate("userId", POPULATE_FIELDS)
       .populate(COMMENT_POPULATE)
       .sort({ createdAt: -1 });
@@ -50,12 +50,21 @@ const getPosts = async (req, res) => {
   }
 };
 
-// @desc    Get posts by a specific user
+// @desc    Get posts by a specific user. The owner can pass ?archived=true to
+//          fetch their archived posts instead; everyone else only ever sees
+//          non-archived ones.
 // @route   GET /api/posts/user/:userId
 // @access  Protected
 const getPostsByUser = async (req, res) => {
   try {
-    const posts = await Post.find({ userId: req.params.userId })
+    const { userId } = req.params;
+    const isOwner = req.user.id === userId;
+    const wantArchived = isOwner && req.query.archived === "true";
+
+    const posts = await Post.find({
+      userId,
+      isArchived: wantArchived ? true : { $ne: true },
+    })
       .populate("userId", POPULATE_FIELDS)
       .populate(COMMENT_POPULATE)
       .sort({ createdAt: -1 });
@@ -208,6 +217,7 @@ const getSavedPosts = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate({
       path: "savedPosts",
+      match: { isArchived: { $ne: true } },
       populate: [
         { path: "userId", select: POPULATE_FIELDS },
         COMMENT_POPULATE,
@@ -215,12 +225,136 @@ const getSavedPosts = async (req, res) => {
       options: { sort: { createdAt: -1 } },
     });
 
-    // Filter out any bookmarks whose post has since been deleted.
+    // Filter out any bookmarks whose post has since been deleted or archived
+    // (the populate `match` above leaves those as null).
     const posts = (user.savedPosts || []).filter(Boolean);
     res.status(200).json({ posts });
   } catch (error) {
     console.error("Get saved posts error:", error);
     res.status(500).json({ message: "Server error fetching saved posts" });
+  }
+};
+
+// @desc    Edit own post's caption, image and/or destination tag
+// @route   PATCH /api/posts/:id
+// @access  Protected
+const editPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    if (post.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed to edit this post" });
+    }
+
+    const { caption, imageUrl, destinationTag } = req.body;
+
+    if (caption !== undefined) {
+      if (!caption || caption.trim() === "") {
+        return res.status(400).json({ message: "Caption cannot be empty" });
+      }
+      post.caption = caption.trim();
+    }
+    if (imageUrl !== undefined) {
+      post.imageUrl = imageUrl; // "" removes the image
+    }
+    if (destinationTag !== undefined) {
+      post.destinationTag = destinationTag.trim(); // "" removes the tag
+    }
+    post.editedAt = new Date();
+
+    await post.save();
+    await post.populate("userId", POPULATE_FIELDS);
+    await post.populate(COMMENT_POPULATE);
+
+    res.status(200).json({ post });
+  } catch (error) {
+    console.error("Edit post error:", error);
+    res.status(500).json({ message: "Server error editing post" });
+  }
+};
+
+// @desc    Permanently delete own post
+// @route   DELETE /api/posts/:id
+// @access  Protected
+const deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    if (post.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed to delete this post" });
+    }
+
+    await post.deleteOne();
+
+    res.status(200).json({ message: "Post deleted" });
+  } catch (error) {
+    console.error("Delete post error:", error);
+    res.status(500).json({ message: "Server error deleting post" });
+  }
+};
+
+// @desc    Toggle archive on own post (hides it everywhere but the owner's
+//          Archived tab; reversible)
+// @route   POST /api/posts/:id/archive
+// @access  Protected
+const toggleArchivePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    if (post.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed to archive this post" });
+    }
+
+    post.isArchived = !post.isArchived;
+    await post.save();
+
+    res.status(200).json({ isArchived: post.isArchived });
+  } catch (error) {
+    console.error("Archive post error:", error);
+    res.status(500).json({ message: "Server error archiving post" });
+  }
+};
+
+// @desc    Toggle like on a comment
+// @route   POST /api/posts/:id/comment/:commentId/like
+// @access  Protected
+const toggleCommentLike = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const userId = req.user.id;
+    const alreadyLiked = comment.likes.some((id) => id.toString() === userId);
+
+    if (alreadyLiked) {
+      comment.likes = comment.likes.filter((id) => id.toString() !== userId);
+    } else {
+      comment.likes.push(userId);
+    }
+
+    await post.save();
+
+    res.status(200).json({
+      commentId: comment._id,
+      likes: comment.likes,
+      likeCount: comment.likes.length,
+    });
+  } catch (error) {
+    console.error("Like comment error:", error);
+    res.status(500).json({ message: "Server error liking comment" });
   }
 };
 
@@ -234,4 +368,8 @@ module.exports = {
   deleteComment,
   toggleSavePost,
   getSavedPosts,
+  editPost,
+  deletePost,
+  toggleArchivePost,
+  toggleCommentLike,
 };

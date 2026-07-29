@@ -24,7 +24,8 @@ An AI-powered travel planning web app where users generate personalized itinerar
 
 ### Social
 - **Community Feed** — Sticky three-column layout with **Latest / Trending / Voyagers-you-follow** tabs, expand-on-focus composer, animated pink heart-burst on like, staggered card entrances, and an end-of-feed marker.
-- **Comments** — Inline, collapsible comment threads on every post (delete your own, or any on your own post).
+- **Your posts, your call** — Edit a post after publishing (caption, photo, destination tag — marked "· edited"), **archive** it to pull it out of the feed and everyone else's view while keeping it in a private **Archived** tab you can restore from, or delete it outright.
+- **Comments** — Inline, collapsible comment threads on every post, each individually likeable (delete your own, or any on your own post).
 - **Voyagers (follow / unfollow)** — Own vocabulary instead of the usual "followers/following": your **Voyagers** follow you, and **Voyagers you follow** power a dedicated feed tab. Counts open list modals.
 - **Bookmarks** — Save any post and revisit it from the **Saved** tab on your profile.
 - **Recency-weighted Trending** — Ranks by likes + comments decayed by post age, so fresh popular posts surface.
@@ -219,11 +220,15 @@ wanderwise-ai/
 ### Posts
 | Method | Endpoint | Description | Auth |
 | --- | --- | --- | --- |
-| POST · GET | `/api/posts` | Create / list posts | Yes |
-| GET | `/api/posts/user/:userId` | Posts by a user | Yes |
+| POST · GET | `/api/posts` | Create / list posts (archived excluded) | Yes |
+| GET | `/api/posts/user/:userId` | Posts by a user · `?archived=true` for your own archive | Yes |
+| PATCH | `/api/posts/:id` | Edit own post (caption / image / tag) | Yes |
+| DELETE | `/api/posts/:id` | Delete own post (permanent) | Yes |
+| POST | `/api/posts/:id/archive` | Toggle archive on own post | Yes |
 | POST | `/api/posts/:id/like` | Toggle like | Yes |
 | POST · GET | `/api/posts/:id/comment` · `/comments` | Add / list comments | Yes |
 | DELETE | `/api/posts/:id/comment/:commentId` | Delete a comment | Yes |
+| POST | `/api/posts/:id/comment/:commentId/like` | Toggle like on a comment | Yes |
 | POST | `/api/posts/:id/save` | Toggle bookmark | Yes |
 | GET | `/api/posts/saved/me` | Current user's saved posts | Yes |
 
@@ -246,6 +251,10 @@ wanderwise-ai/
 ---
 
 ## Roadmap
+
+### Recently shipped (Jul 29, 2026 — later same day)
+- ✅ **Post edit / archive / delete** — owner-only "⋮" menu on every post card. Edit covers caption, photo and destination tag with an "· edited" marker; archive is reversible and hides the post from the feed, other people's view of your profile, their following feed and their bookmarks, surfacing it in a private **Archived** profile tab; delete is permanent.
+- ✅ **Likeable comments** — individual comments can be liked/unliked, independent of post likes and the trending score.
 
 ### Recently shipped (Jul 29, 2026)
 - ✅ Backend keep-alive via scheduled GitHub Actions ping (cuts Render free-tier cold starts)
@@ -276,7 +285,6 @@ wanderwise-ai/
 - ✅ Sign in with Google (OAuth)
 
 ### Planned — near-term
-- [ ] Delete / edit / archive posts, like comments
 - [ ] Private (followers-only) profiles + user-set disappearing posts
 - [ ] Location-aware Explore (nearby → in-country → international → trending) + likeable places
 - [ ] Mobile audit → PWA (installable app)

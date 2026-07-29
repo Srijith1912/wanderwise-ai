@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { createPost, getPosts, likePost, toggleSavePost } from '../services/postService';
+import {
+  createPost,
+  getPosts,
+  likePost,
+  toggleSavePost,
+  editPost,
+  deletePost,
+  toggleArchivePost,
+} from '../services/postService';
 import { getFollowingFeed } from '../services/userService';
 import { getDestinations } from '../services/exploreService';
 import Layout from '../components/Layout';
@@ -169,6 +177,34 @@ export default function FeedPage() {
     } catch (err) {
       fetchPosts();
     }
+  };
+
+  // Delete and archive both just drop the post out of the feed; keep the old
+  // lists so a failed request can put it back.
+  const removeFromFeeds = async (postId, request) => {
+    const prevPosts = posts;
+    const prevFollowing = followingPosts;
+    setPosts((p) => p.filter((post) => post._id !== postId));
+    setFollowingPosts((p) => p.filter((post) => post._id !== postId));
+    try {
+      await request(postId);
+    } catch {
+      setPosts(prevPosts);
+      setFollowingPosts(prevFollowing);
+    }
+  };
+
+  const handleDeletePost = (postId) => removeFromFeeds(postId, deletePost);
+
+  const handleArchivePost = (postId) => removeFromFeeds(postId, toggleArchivePost);
+
+  // Let this throw — EditPostModal owns the error UI for the edit form.
+  const handleEditPost = async (postId, updates) => {
+    const updated = await editPost(postId, updates);
+    const replace = (list) => list.map((p) => (p._id === postId ? updated : p));
+    setPosts(replace);
+    setFollowingPosts(replace);
+    return updated;
   };
 
   const handleToggleSave = async (postId) => {
@@ -408,6 +444,9 @@ export default function FeedPage() {
                       onLike={handleLike}
                       saved={savedIds.has(post._id)}
                       onToggleSave={handleToggleSave}
+                      onEdit={handleEditPost}
+                      onDelete={handleDeletePost}
+                      onArchive={handleArchivePost}
                       highlight={highlightId === post._id}
                     />
                   </div>

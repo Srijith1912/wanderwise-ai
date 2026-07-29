@@ -131,7 +131,10 @@ const getFollowingFeed = async (req, res) => {
     const me = await User.findById(req.user.id).select("following");
     const authorIds = me.following || [];
 
-    const posts = await Post.find({ userId: { $in: authorIds } })
+    const posts = await Post.find({
+      userId: { $in: authorIds },
+      isArchived: { $ne: true },
+    })
       .populate("userId", POST_AUTHOR_FIELDS)
       .populate(COMMENT_POPULATE)
       .sort({ createdAt: -1 });

@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getPostsByUser, getSavedPosts, likePost, toggleSavePost } from '../services/postService';
+import {
+  getPostsByUser,
+  getSavedPosts,
+  likePost,
+  toggleSavePost,
+  editPost,
+  deletePost,
+  toggleArchivePost,
+} from '../services/postService';
 import { getTrips } from '../services/tripService';
 import { getUserProfile, toggleFollow, getFollowers, getFollowing } from '../services/userService';
 import Layout from '../components/Layout';
@@ -74,6 +82,9 @@ export default function UserProfilePage() {
   const [trips, setTrips] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
   const [savedLoaded, setSavedLoaded] = useState(false);
+  const [archivedPosts, setArchivedPosts] = useState([]);
+  const [archivedLoaded, setArchivedLoaded] = useState(false);
+  const [savedIds, setSavedIds] = useState(() => new Set(user?.savedPosts || []));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [followBusy, setFollowBusy] = useState(false);
@@ -150,6 +161,17 @@ export default function UserProfilePage() {
         .finally(() => setSavedLoaded(true));
     }
   }, [tab, isOwnProfile, savedLoaded]);
+
+  // Lazy-load archived posts the first time the Archived tab is opened, and
+  // refetch after an archive elsewhere marks the list stale.
+  useEffect(() => {
+    if (tab === 'archived' && isOwnProfile && !archivedLoaded) {
+      getPostsByUser(userId, { archived: true })
+        .then((p) => setArchivedPosts(p || []))
+        .catch(() => setArchivedPosts([]))
+        .finally(() => setArchivedLoaded(true));
+    }
+  }, [tab, isOwnProfile, archivedLoaded, userId]);
 
   const switchTab = (id) => {
     setTab(id);
@@ -236,6 +258,76 @@ export default function UserProfilePage() {
     setSavedPosts((prev) => prev.filter((p) => p._id !== postId));
     try { await toggleSavePost(postId); } catch { /* ignore */ }
   };
+
+  // Owner actions. Each tab keeps its own list, so the handlers are generated
+  // per-list rather than duplicated three times.
+  const ownerHandlers = (list, setList, { onArchived } = {}) => ({
+    onDelete: async (postId) => {
+      const prev = list;
+      setList((p) => p.filter((post) => post._id !== postId));
+      try {
+        await deletePost(postId);
+      } catch {
+        setList(prev);
+      }
+    },
+    onArchive: async (postId) => {
+      const prev = list;
+      setList((p) => p.filter((post) => post._id !== postId));
+      try {
+        await toggleArchivePost(postId);
+        onArchived?.();
+      } catch {
+        setList(prev);
+      }
+    },
+    // Let this throw — EditPostModal owns the error UI.
+    onEdit: async (postId, updates) => {
+      const updated = await editPost(postId, updates);
+      setList((p) => p.map((post) => (post._id === postId ? updated : post)));
+      return updated;
+    },
+  });
+
+  const refreshPosts = () =>
+    getPostsByUser(userId).then((p) => setPosts(p || [])).catch(() => {});
+
+  const makeLikeHandler = (setList) => async (postId) => {
+    setList((prev) => applyLike(prev, postId));
+    try { await likePost(postId); } catch { /* ignore */ }
+  };
+
+  const handleLikePosts = makeLikeHandler(setPosts);
+  const handleLikeArchived = makeLikeHandler(setArchivedPosts);
+
+  const flipSavedId = (postId) =>
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+
+  const handleToggleSaveOwn = async (postId) => {
+    flipSavedId(postId);
+    try {
+      await toggleSavePost(postId);
+    } catch {
+      flipSavedId(postId); // revert
+    }
+  };
+
+  // Archiving from Posts moves it into Archived (and vice versa), so each
+  // invalidates the other list.
+  const postsTabHandlers = ownerHandlers(posts, setPosts, {
+    onArchived: () => setArchivedLoaded(false),
+  });
+  const savedTabHandlers = ownerHandlers(savedPosts, setSavedPosts, {
+    onArchived: () => setArchivedLoaded(false),
+  });
+  const archivedTabHandlers = ownerHandlers(archivedPosts, setArchivedPosts, {
+    onArchived: refreshPosts, // unarchive — bring it back into Posts now
+  });
 
   if (!user) {
     return (
@@ -465,6 +557,14 @@ export default function UserProfilePage() {
                 >
                   🔖 Saved{savedLoaded ? ` (${savedPosts.length})` : ''}
                 </button>
+                <button
+                  onClick={() => switchTab('archived')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+                    tab === 'archived' ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-500 hover:text-ink-800'
+                  }`}
+                >
+                  🗄 Archived{archivedLoaded ? ` (${archivedPosts.length})` : ''}
+                </button>
               </>
             )}
           </div>
@@ -486,6 +586,22 @@ export default function UserProfilePage() {
                     Share your first post
                   </button>
                 )}
+              </div>
+            ) : isOwnProfile ? (
+              // Your own posts get the full feed card so the owner menu
+              // (edit / archive / delete) lives in one place.
+              <div className="max-w-2xl mx-auto space-y-4">
+                {posts.map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    user={user}
+                    onLike={handleLikePosts}
+                    saved={savedIds.has(post._id)}
+                    onToggleSave={handleToggleSaveOwn}
+                    {...postsTabHandlers}
+                  />
+                ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -579,6 +695,39 @@ export default function UserProfilePage() {
                     onLike={handleLikeSaved}
                     saved={true}
                     onToggleSave={handleUnsave}
+                    {...savedTabHandlers}
+                  />
+                ))}
+              </div>
+            )
+          )}
+
+          {/* Archived tab — own profile only; hidden from everyone else */}
+          {tab === 'archived' && isOwnProfile && (
+            !archivedLoaded ? (
+              <p className="text-ink-500 text-sm">Loading archived posts…</p>
+            ) : archivedPosts.length === 0 ? (
+              <div className="card p-10 text-center">
+                <p className="text-4xl mb-3">🗄</p>
+                <p className="text-ink-500">
+                  No archived posts. Archive one from its “⋮” menu to hide it from your profile
+                  and the feed without deleting it.
+                </p>
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto space-y-4">
+                <p className="text-xs text-ink-500 text-center">
+                  Only you can see these. Unarchive any post to put it back on your profile.
+                </p>
+                {archivedPosts.map((post) => (
+                  <PostCard
+                    key={post._id}
+                    post={post}
+                    user={user}
+                    onLike={handleLikeArchived}
+                    saved={savedIds.has(post._id)}
+                    onToggleSave={handleToggleSaveOwn}
+                    {...archivedTabHandlers}
                   />
                 ))}
               </div>

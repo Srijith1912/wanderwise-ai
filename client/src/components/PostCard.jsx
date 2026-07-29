@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
-import { addComment, deleteComment } from '../services/postService';
+import ImageUpload from './ImageUpload';
+import { addComment, deleteComment, toggleCommentLike } from '../services/postService';
 
 const formatPostTime = (dateStr) => {
   const date = new Date(dateStr);
@@ -18,7 +19,87 @@ const formatCount = (n) => {
   return `${Math.round(n / 1000)}k`;
 };
 
-export default function PostCard({ post, user, onLike, saved, onToggleSave, highlight = false }) {
+// Owner-only edit dialog. Colocated rather than exported — nothing else needs
+// it, mirroring FollowListModal in UserProfilePage.
+function EditPostModal({ post, onClose, onSave }) {
+  const [caption, setCaption] = useState(post.caption || '');
+  const [imageUrl, setImageUrl] = useState(post.imageUrl || '');
+  const [destinationTag, setDestinationTag] = useState(post.destinationTag || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!caption.trim()) {
+      setError('Caption cannot be empty.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave({ caption: caption.trim(), imageUrl, destinationTag: destinationTag.trim() });
+      onClose();
+    } catch {
+      setError('Failed to save changes. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-night/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="card w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-cream-200">
+          <h3 className="font-display font-bold text-ink-900">Edit post</h3>
+          <button onClick={onClose} title="Close" className="text-ink-400 hover:text-ink-700 transition">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <textarea
+            rows={3}
+            maxLength={500}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="What's the story?"
+            className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-forest-500"
+          />
+          <input
+            type="text"
+            placeholder="📍 Destination tag (e.g. Rome, Italy)"
+            value={destinationTag}
+            onChange={(e) => setDestinationTag(e.target.value)}
+            className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-forest-500"
+          />
+          <ImageUpload value={imageUrl} onChange={setImageUrl} />
+          {error && <p className="text-coral-600 text-sm">{error}</p>}
+          <div className="flex justify-end gap-3 pt-1">
+            <button onClick={onClose} className="btn-ghost text-sm">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="btn-primary px-5 py-2 text-sm">
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PostCard({
+  post,
+  user,
+  onLike,
+  saved,
+  onToggleSave,
+  onEdit,
+  onDelete,
+  onArchive,
+  highlight = false,
+}) {
   const navigate = useNavigate();
 
   const [comments, setComments] = useState(post.comments || []);
@@ -27,9 +108,22 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
   const [submittingComment, setSubmittingComment] = useState(false);
   const [popping, setPopping] = useState(false);
   const [shared, setShared] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const isLiked = post.likes.some((id) => id && id.toString() === user?.id);
   const isOwner = user && post.userId?._id?.toString() === user.id;
+  // Owner actions only render where the parent actually wired them up.
+  const showOwnerMenu = isOwner && (onEdit || onDelete || onArchive);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLike = () => {
     setPopping(true);
@@ -63,6 +157,30 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
     }
   };
 
+  // Comment likes stay local to the card, like addComment/deleteComment above —
+  // nothing at the Feed/Profile level needs to know about them.
+  const handleLikeComment = async (commentId) => {
+    const prev = comments;
+    setComments((cs) =>
+      cs.map((c) => {
+        if (c._id !== commentId) return c;
+        const likes = c.likes || [];
+        const liked = likes.some((id) => id && id.toString() === user?.id);
+        return {
+          ...c,
+          likes: liked
+            ? likes.filter((id) => id && id.toString() !== user?.id)
+            : [...likes, user?.id],
+        };
+      }),
+    );
+    try {
+      await toggleCommentLike(post._id, commentId);
+    } catch {
+      setComments(prev); // rollback
+    }
+  };
+
   const handleShare = () => {
     const url = window.location.origin + `/feed#${post._id}`;
     navigator.clipboard?.writeText(url).then(() => {
@@ -72,6 +190,7 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
   };
 
   return (
+    <>
     <article
       id={post._id}
       className={`card overflow-hidden hover:shadow-hover transition ${
@@ -89,17 +208,73 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
             <p className="font-semibold text-ink-900 text-sm group-hover:text-forest-700 transition truncate">
               {isOwner ? 'You' : post.userId?.name}
             </p>
-            <p className="text-xs text-ink-500">{formatPostTime(post.createdAt)}</p>
+            <p className="text-xs text-ink-500">
+              {formatPostTime(post.createdAt)}
+              {post.editedAt ? ' · edited' : ''}
+            </p>
           </div>
         </button>
-        {post.destinationTag && (
-          <button
-            onClick={() => navigate(`/?tag=${encodeURIComponent(post.destinationTag)}`)}
-            className="text-xs font-semibold text-blossom-600 bg-blossom-50 hover:bg-blossom-100 border border-blossom-100 px-2.5 py-1 rounded-full transition shrink-0"
-          >
-            📍 {post.destinationTag}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {post.destinationTag && (
+            <button
+              onClick={() => navigate(`/?tag=${encodeURIComponent(post.destinationTag)}`)}
+              className="text-xs font-semibold text-blossom-600 bg-blossom-50 hover:bg-blossom-100 border border-blossom-100 px-2.5 py-1 rounded-full transition"
+            >
+              📍 {post.destinationTag}
+            </button>
+          )}
+          {showOwnerMenu && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                title="More options"
+                className="p-1.5 rounded-full text-ink-400 hover:text-ink-700 hover:bg-cream-100 transition"
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                  <circle cx="12" cy="5" r="1.75" />
+                  <circle cx="12" cy="12" r="1.75" />
+                  <circle cx="12" cy="19" r="1.75" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-card border border-cream-300 py-2 overflow-hidden z-20">
+                  {onEdit && (
+                    <button
+                      onClick={() => { setMenuOpen(false); setEditOpen(true); }}
+                      className="w-full text-left px-4 py-2 text-sm text-ink-700 hover:bg-cream-100"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {onArchive && (
+                    <button
+                      onClick={() => { setMenuOpen(false); onArchive(post._id); }}
+                      className="w-full text-left px-4 py-2 text-sm text-ink-700 hover:bg-cream-100"
+                    >
+                      {post.isArchived ? 'Unarchive' : 'Archive'}
+                    </button>
+                  )}
+                  {onDelete && (
+                    <>
+                      <div className="border-t border-cream-200 my-1" />
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (window.confirm('Delete this post? This cannot be undone.')) {
+                            onDelete(post._id);
+                          }
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-coral-600 hover:bg-coral-50 font-medium"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Caption */}
@@ -210,6 +385,10 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
                 const author = c.userId || {};
                 const canDelete =
                   user && (author._id?.toString() === user.id || isOwner);
+                const commentLikes = c.likes || [];
+                const isCommentLiked = commentLikes.some(
+                  (id) => id && id.toString() === user?.id,
+                );
                 return (
                   <div key={c._id} className="flex items-start gap-2.5 group/comment">
                     <button onClick={() => author._id && navigate(`/profile/${author._id}`)}>
@@ -228,6 +407,26 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
                         </div>
                         <p className="text-sm text-ink-800 whitespace-pre-wrap break-words">{c.text}</p>
                       </div>
+                      <button
+                        onClick={() => handleLikeComment(c._id)}
+                        title={isCommentLiked ? 'Unlike' : 'Like'}
+                        className={`inline-flex items-center gap-1 mt-1 ml-1 transition ${
+                          isCommentLiked ? 'text-blossom-500' : 'text-ink-400 hover:text-blossom-500'
+                        }`}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-3.5 h-3.5"
+                          fill={isCommentLiked ? 'currentColor' : 'none'}
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                        <span className="text-[11px] font-semibold">
+                          {commentLikes.length > 0 ? formatCount(commentLikes.length) : 'Like'}
+                        </span>
+                      </button>
                     </div>
                     {canDelete && (
                       <button
@@ -269,5 +468,13 @@ export default function PostCard({ post, user, onLike, saved, onToggleSave, high
         </div>
       )}
     </article>
+    {editOpen && (
+      <EditPostModal
+        post={post}
+        onClose={() => setEditOpen(false)}
+        onSave={(updates) => onEdit(post._id, updates)}
+      />
+    )}
+    </>
   );
 }

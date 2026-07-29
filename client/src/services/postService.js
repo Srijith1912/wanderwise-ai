@@ -25,11 +25,38 @@ export const getPosts = async () => {
   return data.posts;
 };
 
-export const getPostsByUser = async (userId) => {
+// `archived: true` is only honoured for your own posts (server-enforced).
+export const getPostsByUser = async (userId, { archived = false } = {}) => {
   const { data } = await axios.get(`${BASE}/user/${userId}`, {
+    params: archived ? { archived: "true" } : undefined,
     headers: getAuthHeader(),
   });
   return data.posts;
+};
+
+export const editPost = async (postId, { caption, imageUrl, destinationTag }) => {
+  const { data } = await axios.patch(
+    `${BASE}/${postId}`,
+    { caption, imageUrl, destinationTag },
+    { headers: getAuthHeader() },
+  );
+  return data.post;
+};
+
+export const deletePost = async (postId) => {
+  const { data } = await axios.delete(`${BASE}/${postId}`, {
+    headers: getAuthHeader(),
+  });
+  return data;
+};
+
+export const toggleArchivePost = async (postId) => {
+  const { data } = await axios.post(
+    `${BASE}/${postId}/archive`,
+    {},
+    { headers: getAuthHeader() },
+  );
+  return data;
 };
 
 export const likePost = async (postId) => {
@@ -60,6 +87,15 @@ export const getComments = async (postId) => {
 export const deleteComment = async (postId, commentId) => {
   const { data } = await axios.delete(
     `${BASE}/${postId}/comment/${commentId}`,
+    { headers: getAuthHeader() },
+  );
+  return data;
+};
+
+export const toggleCommentLike = async (postId, commentId) => {
+  const { data } = await axios.post(
+    `${BASE}/${postId}/comment/${commentId}/like`,
+    {},
     { headers: getAuthHeader() },
   );
   return data;
