@@ -29,9 +29,9 @@ function ChecklistRow({ text, isChecked, onToggle, onRemove }) {
 // the user's own items, and any items they've removed all persist per-trip in
 // localStorage. Removing an AI item hides it locally (the saved trip is untouched).
 export default function PackingList({ packingList, storageKey }) {
-  const checkedKey = `wanderwise:packing:${storageKey}`;
-  const customKey = `wanderwise:packing-custom:${storageKey}`;
-  const removedKey = `wanderwise:packing-removed:${storageKey}`;
+  const checkedKey = `nostosa:packing:${storageKey}`;
+  const customKey = `nostosa:packing-custom:${storageKey}`;
+  const removedKey = `nostosa:packing-removed:${storageKey}`;
 
   const loadSet = (k) => {
     try { return new Set(JSON.parse(localStorage.getItem(k) || '[]')); } catch { return new Set(); }

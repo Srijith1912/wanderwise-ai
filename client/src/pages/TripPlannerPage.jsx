@@ -22,7 +22,7 @@ const computeEndDate = (startDate, duration) => {
 
 const INTERESTS = ["Food", "Culture", "Nature", "Adventure", "History", "Shopping", "Nightlife", "Art"];
 
-const SKIP_DISCARD_KEY = "wanderwise:skipDiscardWarning";
+const SKIP_DISCARD_KEY = "nostosa:skipDiscardWarning";
 const BUDGET_OPTIONS = [
   { value: "budget", label: "Budget", helper: "Hostels, street food, public transit" },
   { value: "moderate", label: "Moderate", helper: "Mid-range hotels, mix of dining" },

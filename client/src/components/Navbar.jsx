@@ -49,7 +49,7 @@ export default function Navbar() {
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem("wanderwise:theme", next ? "dark" : "light");
+      localStorage.setItem("nostosa:theme", next ? "dark" : "light");
     } catch {
       /* storage unavailable — theme still applies for this session */
     }

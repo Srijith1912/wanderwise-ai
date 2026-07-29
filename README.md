@@ -138,7 +138,18 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`, backend on `http://localhost:5000`.
 
-> ⚠️ The live backend uses Render's free tier and may take 30–60 seconds to wake after inactivity.
+> The live backend uses Render's free tier, which spins down after ~15 minutes idle. A GitHub Actions workflow (`.github/workflows/keep-alive.yml`) pings it every 10 minutes to keep cold starts rare — see [Keeping the backend warm](#keeping-the-backend-warm) below.
+
+---
+
+## Keeping the backend warm
+
+Render's free tier puts the backend to sleep after ~15 minutes without traffic, so the first real request after a gap can take 30–60 seconds. `.github/workflows/keep-alive.yml` runs on a GitHub Actions schedule (every 10 minutes) and hits `GET /api/test` to keep it awake, for free.
+
+- Runs automatically once this workflow is on `main` on GitHub — nothing to configure.
+- Trigger it manually anytime from the repo's **Actions** tab (`Keep backend warm` → *Run workflow*).
+- GitHub disables scheduled workflows after 60 days with no commits to the repo; if pings stop, re-enable it from the Actions tab.
+- If the Render service URL ever changes, update it in `.github/workflows/keep-alive.yml`.
 
 ---
 
@@ -235,6 +246,12 @@ wanderwise-ai/
 ---
 
 ## Roadmap
+
+### Recently shipped (Jul 29, 2026)
+- ✅ Backend keep-alive via scheduled GitHub Actions ping (cuts Render free-tier cold starts)
+- ✅ Removed a debug log that printed the MongoDB connection string on server start
+- ✅ Docs cleanup — single root README (dropped the unused Vite boilerplate `client/README.md`), stale env-var comment fixed
+- ✅ Finished the Nostosa rebrand internally (localStorage key prefixes)
 
 ### Recently shipped (Jul 13, 2026 — later same day)
 - ✅ **Rebrand → Nostosa** (from WanderWise) + **Voyagers** social vocabulary
