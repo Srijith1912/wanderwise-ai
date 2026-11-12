@@ -18,7 +18,7 @@ An AI-powered travel planning web app where users generate personalized itinerar
 - **Trip dates** — Optional start date auto-computes the end date from the trip length.
 
 ### Maps & photos
-- **Interactive Map** — Genuinely mappable stops are pinned with **place-name labels**, colour-coded by day, with clickable popups. Geocoding is proximity-biased to the destination and drops low-confidence matches, so an ambiguous name won't land on the wrong continent.
+- **Interactive Map** — Genuinely mappable stops are pinned with **place-name labels**, colour-coded by day, with a per-day filter and clickable popups (a place visited twice gets one pin listing both visits). Coordinates are resolved server-side from **Wikipedia** (landmarks), falling back to **OpenStreetMap/Nominatim** (restaurants, markets, venues), and only accepted when the name matches and the spot is within day-trip range — anything uncertain is left off rather than guessed. Every lookup is cached in MongoDB, so each place is resolved once for all users.
 - **Attractive photography** — Destination and activity images come from Pexels, with Wikipedia and a curated set as fallbacks.
 - **Cards ↔ Timeline** — Toggle the day-by-day plan between a card stack and a vertical timeline.
 
@@ -169,7 +169,7 @@ wanderwise-ai/
 │   │   │   ├── ImageUpload.jsx          # Cloudinary upload + URL-paste fallback
 │   │   │   ├── ItineraryEditor.jsx      # Manual day/activity/tip editor
 │   │   │   ├── Layout.jsx / Navbar.jsx  # Navbar has the dark/light toggle
-│   │   │   ├── MapView.jsx              # Mapbox map, labeled place pins
+│   │   │   ├── MapView.jsx              # Mapbox map, labeled pins + day filter
 │   │   │   ├── PackingList.jsx          # Editable packing checklist
 │   │   │   ├── PlannerChat.jsx          # AI refinement chat popup
 │   │   │   ├── PostCard.jsx             # Feed card: like/comment/save/share,
@@ -179,17 +179,17 @@ wanderwise-ai/
 │   │   ├── contexts/AuthContext.jsx     # Auth state + useAuth()
 │   │   ├── pages/                       # Explore, Feed, Login, Signup, Settings, Contact,
 │   │   │                                # TripPlanner, TripDetail, SavedTrips, UserProfile
-│   │   ├── services/                    # auth, explore, post, trip, user, weather
+│   │   ├── services/                    # auth, explore, geo, post, trip, user, weather
 │   │   └── utils/                       # cloudinary, copy (rotating editorial lines),
 │   │   │                                # geocode, passwordRules, photo, wikiPhoto
 │   ├── tailwind.config.js · vercel.json · vite.config.js
 │
 ├── server/                             # Express backend
-│   ├── controllers/                    # auth, explore, photo, post, trip, user, weather
+│   ├── controllers/                    # auth, explore, geo, photo, post, trip, user, weather
 │   ├── data/destinations.js            # 20 curated destinations
 │   ├── middleware/authMiddleware.js
-│   ├── models/                         # User, Trip, Post, TrendingCache
-│   ├── routes/                         # auth, explore, photo, post, trip, user, weather
+│   ├── models/                         # User, Trip, Post, TrendingCache, GeoCache
+│   ├── routes/                         # auth, explore, geo, photo, post, trip, user, weather
 │   └── server.js
 │
 └── README.md
@@ -244,17 +244,21 @@ wanderwise-ai/
 | GET | `/api/users/:id/followers` · `/following` | Follower / following lists | Yes |
 | GET | `/api/users/me/feed` | Posts from people you follow | Yes |
 
-### Explore / Weather / Photos
+### Explore / Weather / Photos / Map
 | Method | Endpoint | Description | Auth |
 | --- | --- | --- | --- |
 | GET | `/api/explore` | Curated destinations (continent / budget / vibe filters) | No |
 | GET | `/api/explore/trending` | Weekly AI-cached trending destinations | No |
 | GET | `/api/weather?city=` | 5-day forecast (OpenWeather) | Yes |
 | GET | `/api/photos?query=` | Best landscape photo (Pexels proxy) | No |
+| POST | `/api/geo/pins` | Coordinates for a trip's named places (Wikipedia → Nominatim, cached) | Yes |
 
 ---
 
 ## Roadmap
+
+### Recently shipped (Nov 12, 2026)
+- ✅ **Accurate map pins** — place lookup moved server-side to Wikipedia + OpenStreetMap with name and distance checks, cached in MongoDB. On a 60-case test across 15 destinations, all 57 real places landed within ~0.5 km of the real spot and the 3 vague or made-up ones were correctly left off (the previous Mapbox lookup put 9 of 27 within 1 km, often dropping the pin on the city centre). Map now fits to the pins, adds a per-day filter, merges repeat visits into one pin, and fixes unreadable hovered labels in dark mode.
 
 ### Recently shipped (Jul 29, 2026 — later same day)
 - ✅ **Post edit / archive / delete** — owner-only "⋮" menu on every post card. Edit covers caption, photo and destination tag with an "· edited" marker; archive is reversible and hides the post from the feed, other people's view of your profile, their following feed and their bookmarks, surfacing it in a private **Archived** profile tab; delete is permanent.

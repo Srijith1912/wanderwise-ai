@@ -9,6 +9,7 @@ const exploreRoutes = require("./routes/exploreRoutes");
 const userRoutes = require("./routes/userRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 const photoRoutes = require("./routes/photoRoutes");
+const geoRoutes = require("./routes/geoRoutes");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/explore", exploreRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/photos", photoRoutes);
+app.use("/api/geo", geoRoutes);
 
 const PORT = process.env.PORT || 5000;
 
